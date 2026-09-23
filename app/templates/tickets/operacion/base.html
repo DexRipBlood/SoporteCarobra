@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block extra_css %}{% include "tickets/operacion/estilos.html" %}{% block panel_css %}{% endblock %}{% endblock %}
+{% block content %}<div class="op-page">
+<nav class="op-nav" aria-label="Configuración operativa">
+<a href="{% url 'tickets:territorio' %}" {% if request.resolver_match.url_name == 'territorio' %}aria-current="page"{% endif %}>Empresas y tiendas</a>
+<a href="{% url 'tickets:calendario' %}" {% if request.resolver_match.url_name == 'calendario' %}aria-current="page"{% endif %}>Equipos y calendario</a>
+<a href="{% url 'tickets:permisos' %}" {% if request.resolver_match.url_name == 'permisos' %}aria-current="page"{% endif %}>Usuarios y permisos</a>
+<a href="{% url 'tickets:incidencias' %}" {% if request.resolver_match.url_name == 'incidencias' %}aria-current="page"{% endif %}>Incidencias y tiempos</a>
+</nav>{% block panel %}{% endblock %}</div>{% endblock %}

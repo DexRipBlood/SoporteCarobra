@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mapa de tiendas · CAROBRA Operations{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'vendor/maplibre/maplibre-gl.css' %}">
+<link rel="preconnect" href="https://protomaps.github.io" crossorigin>
+<style>
+.store-map-page{max-width:1540px;margin:auto;animation:mapEnter .72s var(--motion-calm) both}.store-map-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:16px}.store-map-kicker{display:block;color:var(--primary);font-size:10px;font-weight:750;letter-spacing:.11em;text-transform:uppercase}.store-map-head h2{margin:5px 0 4px;font-size:clamp(23px,2.3vw,34px)}.store-map-head p{margin:0;color:var(--muted);font-size:12px}.store-map-stats{display:flex;gap:8px}.store-map-stat{min-width:100px;padding:11px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow-sm)}.store-map-stat span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase}.store-map-stat strong{display:block;margin-top:4px;font-size:21px}.store-map-layout{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:14px}.store-map-panel,.store-map-canvas-card{border:1px solid var(--border);border-radius:17px;background:var(--surface);box-shadow:var(--shadow-sm);overflow:hidden}.store-map-panel{padding:17px;align-self:start}.store-map-panel h3{margin:0 0 4px;font-size:14px}.store-map-panel>p{margin:0 0 15px;color:var(--muted);font-size:10px}.store-map-filters{display:grid;gap:10px}.store-map-field label{display:block;margin-bottom:5px;color:var(--text-soft);font-size:9px;font-weight:700}.store-map-field input,.store-map-field select{width:100%;height:39px;padding:0 11px;border:1px solid var(--border-strong);border-radius:9px;background:var(--surface-2);color:var(--text);font-size:11px}.store-map-double{display:grid;grid-template-columns:1fr 1fr;gap:8px}.store-map-actions{display:flex;gap:7px;margin-top:4px}.store-map-actions .system-button{flex:1;justify-content:center}.store-map-canvas-card{position:relative;min-height:660px}.store-map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border-bottom:1px solid var(--border)}.store-map-toolbar strong{font-size:12px}.store-map-toolbar-copy{display:flex;align-items:center;gap:9px}.store-map-toolbar-copy span{color:var(--muted);font-size:10px}.store-map-legend{display:flex;flex-wrap:wrap;gap:9px;margin:0 0 12px}.store-map-legend span{display:inline-flex;align-items:center;gap:5px;color:var(--text-soft);font-size:9px}.store-map-legend i{width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 2px color-mix(in srgb,currentColor 20%,transparent)}.legend-promoda{background:#e5484d}.legend-bodega{background:#27a96b}.legend-gcc{background:#e5b82e}.store-map-canvas{height:606px;background:#7d848d}.store-map-empty{position:absolute;z-index:500;left:50%;top:50%;width:min(360px,calc(100% - 32px));transform:translate(-50%,-50%);padding:20px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--surface) 92%,transparent);box-shadow:var(--shadow-md);text-align:center;backdrop-filter:blur(14px)}.store-map-empty strong{display:block;font-size:14px}.store-map-empty span{display:block;margin-top:6px;color:var(--muted);font-size:10px;line-height:1.5}.store-map-pending{grid-column:1/-1;margin-top:2px;padding:17px;border:1px solid var(--border);border-radius:15px;background:var(--surface)}.store-map-pending header{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}.store-map-pending h3{margin:0;font-size:13px}.store-map-pending header span{color:var(--warning);font-size:10px}.pending-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.pending-store{padding:11px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}.pending-store strong,.pending-store span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pending-store strong{font-size:11px}.pending-store span{margin-top:4px;color:var(--muted);font-size:9px}.coordinate-dialog{width:min(520px,calc(100% - 28px));padding:0;border:1px solid var(--border);border-radius:16px;background:var(--surface);color:var(--text);box-shadow:var(--shadow-lg)}.coordinate-dialog::backdrop{background:rgba(5,10,20,.7);backdrop-filter:blur(5px)}.coordinate-dialog header{display:flex;align-items:center;justify-content:space-between;padding:17px 19px;border-bottom:1px solid var(--border)}.coordinate-dialog h3{margin:0;font-size:14px}.coordinate-close{border:0;background:none;color:var(--muted);font-size:22px;cursor:pointer}.coordinate-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:19px}.coordinate-field:first-child{grid-column:1/-1}.coordinate-field label{display:block;margin-bottom:6px;color:var(--text-soft);font-size:10px;font-weight:700}.coordinate-field input,.coordinate-field select{width:100%;height:42px;padding:0 11px;border:1px solid var(--border-strong);border-radius:9px;background:var(--surface-2);color:var(--text)}.coordinate-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;margin-top:5px}.store-marker{display:grid;place-items:center;width:26px;height:26px;border:3px solid #fff;border-radius:50% 50% 50% 8px;background:#4675ef;box-shadow:0 5px 16px rgba(12,25,53,.36);transform:rotate(-45deg)}.store-marker::after{content:"";width:7px;height:7px;border-radius:50%;background:#fff}.store-marker.is-promoda{background:#e5484d}.store-marker.is-bodega{background:#27a96b}.store-marker.is-gcc{background:#e5b82e}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--text)}.leaflet-popup-content{margin:15px;min-width:230px}.map-popup h4{margin:0 0 3px;font-size:13px}.map-popup-code{color:var(--primary);font-size:9px;font-weight:750}.map-popup-address{margin:8px 0;color:var(--text-soft);font-size:10px;line-height:1.45}.map-popup-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.map-popup-grid span{display:block;color:var(--muted);font-size:8px;text-transform:uppercase}.map-popup-grid strong{display:block;margin-top:2px;font-size:9px}.map-popup-link{display:block;margin-top:10px;color:var(--primary);font-size:10px;font-weight:700;text-decoration:none}@keyframes mapEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}@media(max-width:1050px){.store-map-layout{grid-template-columns:1fr}.store-map-panel{position:static}.store-map-filters{grid-template-columns:repeat(3,1fr)}.store-map-field:first-child,.store-map-actions{grid-column:1/-1}.pending-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:680px){.store-map-head{align-items:flex-start;flex-direction:column}.store-map-stats{width:100%}.store-map-stat{flex:1;min-width:0}.store-map-filters{grid-template-columns:1fr}.store-map-double,.pending-grid,.coordinate-form{grid-template-columns:1fr}.store-map-field:first-child,.store-map-actions,.coordinate-field:first-child{grid-column:auto}.store-map-canvas-card{min-height:520px}.store-map-canvas{height:470px}.store-map-toolbar{align-items:flex-start;flex-direction:column}.store-map-toolbar-copy{align-items:flex-start;flex-direction:column}}
+.store-map-results{position:absolute;z-index:600;top:62px;right:14px;bottom:14px;width:min(300px,34%);display:flex;flex-direction:column;border:1px solid color-mix(in srgb,var(--border) 80%,transparent);border-radius:14px;background:color-mix(in srgb,var(--surface) 91%,transparent);box-shadow:var(--shadow-lg);backdrop-filter:blur(16px);overflow:hidden}.store-map-results header{padding:13px 14px;border-bottom:1px solid var(--border)}.store-map-results header strong,.store-map-results header span{display:block}.store-map-results header span{margin-top:3px;color:var(--muted);font-size:9px}.store-map-results-list{padding:8px;overflow:auto;scroll-behavior:smooth}.store-result{position:relative;width:100%;display:grid;grid-template-columns:10px 1fr auto;gap:9px;align-items:start;padding:11px 9px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--text);text-align:left;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}.store-result:hover,.store-result.is-active{border-color:var(--border-strong);background:var(--surface-2);transform:translateX(-2px)}.store-result-dot{width:9px;height:9px;margin-top:3px;border-radius:50%;background:#4675ef;box-shadow:0 0 0 4px color-mix(in srgb,#4675ef 16%,transparent)}.store-result-dot.BODEGA{background:#27a96b}.store-result-dot.PROMODA{background:#e5484d}.store-result-dot.GCC{background:#e5b82e}.store-result-copy strong,.store-result-copy small{display:block}.store-result-copy strong{font-size:10px}.store-result-copy small{margin-top:3px;color:var(--muted);font-size:8px;line-height:1.35}.store-result-action{color:var(--primary);font-size:9px;font-weight:750}.leaflet-control-layers{border:1px solid var(--border)!important;border-radius:10px!important;background:var(--surface)!important;color:var(--text)!important;box-shadow:var(--shadow-md)!important}@media(max-width:900px){.store-map-results{position:relative;inset:auto;width:auto;max-height:320px;margin:12px}.store-map-canvas-card{padding-bottom:1px}}@media(max-width:680px){.store-map-results{max-height:280px}.store-result{grid-template-columns:10px 1fr}}
+.store-map-results[hidden],.store-map-empty[hidden],.store-map-pending[hidden]{display:none}.store-map-filters.is-loading{opacity:.68;pointer-events:none}.store-map-canvas-card.is-updating::after{content:"Actualizando tiendas…";position:absolute;z-index:900;left:50%;top:75px;transform:translateX(-50%);padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text);box-shadow:var(--shadow-md);font-size:10px;font-weight:750;animation:mapEnter .2s ease both}.map-style-switch{display:flex;padding:3px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}.map-style-switch button{padding:6px 9px;border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:9px;font-weight:750;cursor:pointer}.map-style-switch button.is-active{background:var(--primary);color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--primary) 25%,transparent)}.map-local-badge{display:inline-flex;align-items:center;gap:6px;color:#27a96b!important}.map-local-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:#27a96b;box-shadow:0 0 0 4px color-mix(in srgb,#27a96b 17%,transparent)}.maplibregl-map{font-family:inherit}.maplibregl-ctrl-group{border:1px solid var(--border)!important;border-radius:11px!important;background:var(--surface)!important;box-shadow:var(--shadow-md)!important}.maplibregl-ctrl button .maplibregl-ctrl-icon{filter:var(--map-control-filter,none)}.maplibregl-popup-content{min-width:250px;padding:15px;border:1px solid var(--border);border-radius:13px;background:var(--surface);color:var(--text);box-shadow:var(--shadow-lg)}.maplibregl-popup-tip{border-top-color:var(--surface)!important}.maplibregl-popup-close-button{padding:4px 8px;color:var(--muted);font-size:18px}.maplibregl-ctrl-attrib{background:color-mix(in srgb,var(--surface) 86%,transparent)!important;color:var(--muted)!important}.maplibregl-ctrl-attrib a{color:var(--text-soft)!important}
+.store-map-layout{grid-template-columns:minmax(0,1fr);gap:16px}.store-map-panel{padding:14px 16px}.store-filter-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:12px}.store-filter-copy h3{margin:0 0 3px}.store-filter-copy p{margin:0;color:var(--muted);font-size:10px}.store-filter-head .store-map-legend{flex:none;margin:0}.store-map-filters{display:block}.store-map-primary{display:grid;grid-template-columns:2fr repeat(5,minmax(125px,1fr));gap:10px;align-items:end}.store-map-advanced{margin-top:11px;border-top:1px solid var(--border)}.store-map-advanced summary{display:flex;align-items:center;justify-content:space-between;padding:10px 2px 0;color:var(--text-soft);font-size:10px;font-weight:750;cursor:pointer;list-style:none}.store-map-advanced summary::-webkit-details-marker{display:none}.store-map-advanced summary::after{content:"＋";color:var(--primary);font-size:15px}.store-map-advanced[open] summary::after{content:"−"}.store-map-advanced-grid{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:10px;margin-top:10px}.store-map-actions{justify-content:flex-end;margin-top:12px}.store-map-actions .system-button{flex:0 0 auto;min-width:120px}.store-map-canvas-card{min-height:0}.store-map-canvas{height:max(560px,calc(100vh - 335px));max-height:760px}.store-map-toolbar-copy{flex-wrap:wrap}.store-map-results{top:68px;width:min(320px,29%)}@media(max-width:1250px){.store-map-primary{grid-template-columns:repeat(3,1fr)}.store-map-advanced-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:760px){.store-filter-head{align-items:flex-start;flex-direction:column}.store-map-primary,.store-map-advanced-grid{grid-template-columns:1fr 1fr}.store-map-canvas{height:520px}.store-map-results{width:auto}.map-local-badge{display:none}}@media(max-width:520px){.store-map-primary,.store-map-advanced-grid{grid-template-columns:1fr}.store-map-actions{display:grid;grid-template-columns:1fr 1fr}.store-map-actions .system-button{min-width:0}.store-map-stats{display:grid;grid-template-columns:repeat(3,1fr)}.store-map-stat{padding:9px}.store-map-toolbar-copy{width:100%}}
+.map-back-link{display:inline-flex;margin-top:9px;color:var(--primary);font-size:10px;font-weight:750;text-decoration:none}.store-map-toolbar>div:first-child{display:flex;align-items:center;gap:12px}.store-map-advanced summary span{color:var(--muted);font-size:9px;font-weight:500}
+</style>
+{% endblock %}
+{% block content %}
+<div class="store-map-page">
+  <header class="store-map-head">
+    <div><span class="store-map-kicker">Directorio territorial</span><h2>Mapa de tiendas</h2><p>Consulta la distribución operativa y los responsables de soporte en México.</p><a class="map-back-link" href="{% url 'tickets:territorio' %}">← Volver al directorio</a></div>
+    <div class="store-map-stats"><div class="store-map-stat"><span>Resultados</span><strong data-map-stat="total">{{ total }}</strong></div><div class="store-map-stat"><span>Ubicadas</span><strong data-map-stat="localizadas">{{ localizadas }}</strong></div><div class="store-map-stat"><span>Pendientes</span><strong data-map-stat="pendientes">{{ pendientes }}</strong></div></div>
+  </header>
+  <div class="store-map-layout">
+    <aside class="store-map-panel">
+      <div class="store-filter-head"><div class="store-filter-copy"><h3>Buscar y filtrar tiendas</h3><p>Los resultados y marcadores se actualizan sin recargar la página.</p></div><div class="store-map-legend"><span><i class="legend-promoda"></i>Promoda</span><span><i class="legend-bodega"></i>Bodega</span><span><i class="legend-gcc"></i>GCC</span></div></div>
+      <form class="store-map-filters" method="get" id="storeMapFilters">
+        <div class="store-map-primary">
+        <div class="store-map-field"><label for="map-q">Buscar tienda o calle</label><input id="map-q" name="q" value="{{ busqueda }}" placeholder="Nombre, número, calle o ciudad"></div>
+        <div class="store-map-field"><label for="map-empresa">Empresa</label><select id="map-empresa" name="empresa"><option value="">Todas</option>{% for valor in opciones.empresa %}<option value="{{ valor.id }}" {% if filtros.empresa == valor.id|stringformat:'s' %}selected{% endif %}>{{ valor.nombre }}</option>{% endfor %}</select></div>
+        <div class="store-map-field"><label for="map-estado">Estado</label><select id="map-estado" name="estado"><option value="">Todos</option>{% for valor in opciones.estado %}<option value="{{ valor }}" {% if filtros.estado == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        <div class="store-map-field"><label for="map-ciudad">Ciudad/localidad</label><select id="map-ciudad" name="ciudad"><option value="">Todas</option>{% for valor in opciones.ciudad %}<option value="{{ valor }}" {% if filtros.ciudad == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}<option value="__SIN_CIUDAD__" {% if filtros.ciudad == '__SIN_CIUDAD__' %}selected{% endif %}>Sin registrar</option></select></div>
+        <div class="store-map-field"><label for="map-distrital">Distrito</label><select id="map-distrital" name="distrital"><option value="">Todos</option>{% for valor in opciones.distrital %}<option value="{{ valor }}" {% if filtros.distrital == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        <div class="store-map-field"><label for="map-socio">Tipo de tienda</label><select id="map-socio" name="socio"><option value="">Todos</option>{% for valor in opciones.socio %}<option value="{{ valor }}" {% if filtros.socio == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        </div>
+        <details class="store-map-advanced" {% if filtros.agencia or filtros.coordinador or filtros.tipo_coordinador or filtros.gerente or filtros.encargado or filtros.partner or filtros.prioridad or filtros.piloto or filtros.retiro %}open{% endif %}><summary>Más filtros operativos <span>Agencia, equipo, prioridad y operación</span></summary><div class="store-map-advanced-grid">
+        <div class="store-map-field"><label for="map-agencia">Agencia</label><select id="map-agencia" name="agencia"><option value="">Todas</option>{% for valor in opciones.agencia %}<option value="{{ valor }}" {% if filtros.agencia == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        <div class="store-map-field"><label for="map-coordinador">Coordinador</label><select id="map-coordinador" name="coordinador"><option value="">Todos</option>{% for valor in opciones.coordinador %}<option value="{{ valor }}" {% if filtros.coordinador == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        <div class="store-map-field"><label for="map-tipo-coordinador">Tipo de coordinador</label><select id="map-tipo-coordinador" name="tipo_coordinador"><option value="">Todos</option>{% for valor in opciones.tipo_coordinador %}<option value="{{ valor }}" {% if filtros.tipo_coordinador == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        <div class="store-map-field"><label for="map-gerente">Gerente distrital</label><select id="map-gerente" name="gerente"><option value="">Todos</option>{% for valor in opciones.gerente %}<option value="{{ valor }}" {% if filtros.gerente == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        <div class="store-map-field"><label for="map-encargado">Encargado de soporte</label><select id="map-encargado" name="encargado"><option value="">Todos</option>{% for valor in opciones.encargado %}<option value="{{ valor }}" {% if filtros.encargado == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        <div class="store-map-field"><label for="map-partner">Partner</label><select id="map-partner" name="partner"><option value="">Todos</option>{% for valor in opciones.partner %}<option value="{{ valor }}" {% if filtros.partner == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        <div class="store-map-field"><label for="map-prioridad">Prioridad</label><select id="map-prioridad" name="prioridad"><option value="">Todas</option>{% for valor in opciones.prioridad %}<option value="{{ valor }}" {% if filtros.prioridad == valor %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+        <div class="store-map-double"><div class="store-map-field"><label for="map-piloto">Piloto</label><select id="map-piloto" name="piloto"><option value="">Todos</option><option value="si" {% if filtros.piloto == 'si' %}selected{% endif %}>Sí</option><option value="no" {% if filtros.piloto == 'no' %}selected{% endif %}>No</option></select></div><div class="store-map-field"><label for="map-retiro">Retiro</label><select id="map-retiro" name="retiro"><option value="">Todos</option><option value="si" {% if filtros.retiro == 'si' %}selected{% endif %}>Sí</option><option value="no" {% if filtros.retiro == 'no' %}selected{% endif %}>No</option></select></div></div>
+        </div></details>
+        <div class="store-map-actions"><a class="system-button" href="{% url 'tickets:mapa_tiendas' %}" data-map-clear>Limpiar</a><button class="system-button system-button-primary" type="submit" data-map-submit>Aplicar filtros</button></div>
+      </form>
+    </aside>
+    <section class="store-map-canvas-card" data-selected-store="{{ tienda_seleccionada }}">
+      <div class="store-map-toolbar"><div><strong>Mapa vectorial de México</strong><span class="map-local-badge">Cartografía alojada en CAROBRA</span></div><div class="store-map-toolbar-copy"><div class="map-style-switch" aria-label="Estilo del mapa"><button class="is-active" type="button" data-map-style="light">Claro</button><button type="button" data-map-style="dark">Oscuro</button></div><button class="system-button" type="button" data-coordinate-open>Editar ubicación</button></div></div>
+      <div id="storeMap" class="store-map-canvas" aria-label="Mapa de ubicaciones de tiendas"></div>
+      <aside class="store-map-results" aria-label="Tiendas filtradas" {% if not marcadores %}hidden{% endif %}><header><strong>Tiendas encontradas</strong><span>Toca una tarjeta para viajar a su ubicación</span></header><div class="store-map-results-list" data-map-results>{% for tienda in marcadores %}<button class="store-result" type="button" data-map-store="{{ tienda.id }}"><i class="store-result-dot {{ tienda.cadena }}"></i><span class="store-result-copy"><strong>{{ tienda.nombre }}</strong><small>{{ tienda.socio }} · {{ tienda.ciudad|default:tienda.estado }}</small><small>Distrito {{ tienda.distrital }}</small></span><span class="store-result-action">Ver →</span></button>{% endfor %}</div></aside><div class="store-map-empty" data-map-empty {% if marcadores %}hidden{% endif %}><strong>No hay ubicaciones para mostrar</strong><span>Ajusta los filtros o registra las coordenadas pendientes.</span></div>
+    </section>
+    <section class="store-map-pending" data-map-pending {% if not pendientes %}hidden{% endif %}><header><h3>Direcciones pendientes de ubicación</h3><span data-map-pending-count>{{ pendientes }} tienda{{ pendientes|pluralize }}</span></header><div class="pending-grid" data-map-pending-list>{% for tienda in pendientes_tiendas %}<article class="pending-store"><strong>{{ tienda.nombre }}</strong><span>{{ tienda.direccion|default:"Sin dirección" }}{% if tienda.estado %}, {{ tienda.estado }}{% endif %}</span></article>{% endfor %}</div></section>
+  </div>
+</div>
+{{ marcadores|json_script:"store-map-data" }}
+{{ coordenadas_catalogo|json_script:"coordinate-catalog-data" }}
+<dialog class="coordinate-dialog" id="coordinateDialog"><header><h3>Editar coordenadas</h3><button class="coordinate-close" type="button" data-coordinate-close aria-label="Cerrar">×</button></header><form class="coordinate-form" method="post" action="{% url 'tickets:actualizar_coordenadas' %}">{% csrf_token %}<div class="coordinate-field"><label for="{{ coordenadas_form.tienda.id_for_label }}">Tienda</label>{{ coordenadas_form.tienda }}</div><div class="coordinate-field"><label for="{{ coordenadas_form.latitud.id_for_label }}">Latitud</label>{{ coordenadas_form.latitud }}</div><div class="coordinate-field"><label for="{{ coordenadas_form.longitud.id_for_label }}">Longitud</label>{{ coordenadas_form.longitud }}</div><div class="coordinate-actions"><button class="system-button" type="button" data-coordinate-close>Cancelar</button><button class="system-button system-button-primary" type="submit">Guardar ubicación</button></div></form></dialog>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'vendor/maplibre/maplibre-gl.js' %}"></script>
+<script src="{% static 'vendor/pmtiles/pmtiles.js' %}"></script>
+<script src="{% static 'vendor/protomaps/basemaps.js' %}"></script>
+<script>
+(() => {
+  const target = document.getElementById("storeMap");
+  if (!target || !window.maplibregl || !window.pmtiles || !window.basemaps) return;
+  let stores = JSON.parse(document.getElementById("store-map-data").textContent);
+  const tileUrl = `${window.location.origin}{% url 'tickets:mapa_vectorial_mexico' %}`;
+  const maskUrl = "{% url 'tickets:geometria_mexico' 'mascara' %}";
+  const protocol = new pmtiles.Protocol();
+  maplibregl.addProtocol("pmtiles", protocol.tile);
+  const buildStyle = flavor => ({
+    version: 8,
+    glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+    sprite: `https://protomaps.github.io/basemaps-assets/sprites/v4/${flavor}`,
+    sources: { protomaps: { type: "vector", url: `pmtiles://${tileUrl}`, attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Límite INEGI' } },
+    layers: basemaps.layers("protomaps", basemaps.namedFlavor(flavor), { lang: "es" })
+  });
+  let currentFlavor = "light";
+  const map = new maplibregl.Map({
+    container: target,
+    style: buildStyle(currentFlavor),
+    center: [-102.5528, 23.6345],
+    zoom: 4.3,
+    minZoom: 4,
+    maxZoom: 17,
+    maxBounds: [[-118.8, 13.8], [-86.2, 33.9]],
+    pitch: 0,
+    bearing: 0,
+    fadeDuration: 0,
+    renderWorldCopies: false,
+    attributionControl: false
+  });
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
+  map.addControl(new maplibregl.FullscreenControl(), "bottom-right");
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
+  const resultsPanel = document.querySelector(".store-map-results");
+  const resultsList = document.querySelector("[data-map-results]");
+  const emptyState = document.querySelector("[data-map-empty]");
+  const safe = value => String(value || "").replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[char]);
+  let popup = null;
+
+  const asGeoJSON = items => ({ type: "FeatureCollection", features: items.map(store => ({
+    type: "Feature",
+    geometry: { type: "Point", coordinates: [store.longitud, store.latitud] },
+    properties: { ...store, id: String(store.id) }
+  })) });
+
+  const installLayers = () => {
+    map.addSource("mexico-mask", { type: "geojson", data: maskUrl });
+    map.addLayer({ id: "mexico-mask", type: "fill", source: "mexico-mask", paint: { "fill-color": currentFlavor === "dark" ? "#070d17" : "#d8e1ea", "fill-opacity": 1 } });
+    map.addSource("stores", { type: "geojson", data: asGeoJSON(stores), cluster: true, clusterMaxZoom: 12, clusterRadius: 46 });
+    map.addLayer({ id: "store-clusters", type: "circle", source: "stores", filter: ["has", "point_count"], paint: { "circle-color": ["step", ["get", "point_count"], "#4776ed", 10, "#315ee4", 30, "#193fa8"], "circle-radius": ["step", ["get", "point_count"], 17, 10, 22, 30, 28], "circle-stroke-width": 3, "circle-stroke-color": "rgba(255,255,255,.86)", "circle-opacity": .93 } });
+    map.addLayer({ id: "store-cluster-count", type: "symbol", source: "stores", filter: ["has", "point_count"], layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 11, "text-font": ["Noto Sans Regular"] }, paint: { "text-color": "#fff" } });
+    map.addLayer({ id: "store-points", type: "circle", source: "stores", filter: ["!", ["has", "point_count"]], paint: { "circle-color": ["match", ["get", "cadena"], "BODEGA", "#27a96b", "PROMODA", "#e5484d", "GCC", "#e5b82e", "#4675ef"], "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 6, 14, 11], "circle-stroke-width": 3, "circle-stroke-color": "#fff", "circle-opacity": .95 } });
+    map.addSource("store-focus", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    map.addLayer({ id: "store-focus", type: "circle", source: "store-focus", paint: { "circle-radius": 22, "circle-color": "rgba(49,94,228,.14)", "circle-stroke-width": 3, "circle-stroke-color": "#315ee4" } });
+  };
+
+  const activateCard = id => {
+    document.querySelectorAll("[data-map-store]").forEach(card => card.classList.toggle("is-active", card.dataset.mapStore === String(id)));
+    document.querySelector(`[data-map-store="${id}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  };
+  const focusStore = id => {
+    const store = stores.find(item => String(item.id) === String(id));
+    if (!store) return;
+    activateCard(id);
+    map.getSource("store-focus")?.setData({ type: "Feature", geometry: { type: "Point", coordinates: [store.longitud, store.latitud] }, properties: {} });
+    map.flyTo({ center: [store.longitud, store.latitud], zoom: 15.5, pitch: 32, duration: 1150, essential: true });
+    popup?.remove();
+    window.setTimeout(() => {
+      popup = new maplibregl.Popup({ offset: 16, maxWidth: "320px" }).setLngLat([store.longitud, store.latitud]).setHTML(`<div class="map-popup"><h4>${safe(store.nombre)}</h4><span class="map-popup-code">${safe(store.socio) || "Tipo pendiente"}</span><p class="map-popup-address">${safe(store.direccion)}${store.ciudad ? `, ${safe(store.ciudad)}` : ""}${store.estado ? `, ${safe(store.estado)}` : ""}</p><div class="map-popup-grid"><div><span>Distrito</span><strong>${safe(store.distrital) || "—"}</strong></div><div><span>Gerente distrital</span><strong>${safe(store.gerente) || "—"}</strong></div><div><span>Encargado</span><strong>${safe(store.encargado) || "—"}</strong></div><div><span>Partner</span><strong>${safe(store.partner) || "—"}</strong></div></div><a class="map-popup-link" href="{% url 'tickets:lista' %}?q=${encodeURIComponent(store.numero || store.nombre)}">Ver tickets de la tienda →</a></div>`).addTo(map);
+    }, 700);
+  };
+  const createCard = store => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "store-result";
+    card.dataset.mapStore = store.id;
+    const dot = document.createElement("i");
+    dot.className = `store-result-dot ${store.cadena || ""}`;
+    const copy = document.createElement("span");
+    copy.className = "store-result-copy";
+    const name = document.createElement("strong");
+    name.textContent = store.nombre;
+    const place = document.createElement("small");
+    place.textContent = `${store.socio || "Tipo pendiente"} · ${store.ciudad || store.estado || "Ubicación pendiente"}`;
+    const district = document.createElement("small");
+    district.textContent = `Distrito ${store.distrital || "por registrar"}`;
+    copy.append(name, place, district);
+    const action = document.createElement("span");
+    action.className = "store-result-action";
+    action.textContent = "Ver →";
+    card.append(dot, copy, action);
+    card.addEventListener("click", () => focusStore(store.id));
+    return card;
+  };
+  const renderStores = (stores, fit = true) => {
+    popup?.remove();
+    resultsList.replaceChildren();
+    stores.forEach(store => resultsList.appendChild(createCard(store)));
+    map.getSource("stores")?.setData(asGeoJSON(stores));
+    map.getSource("store-focus")?.setData({ type: "FeatureCollection", features: [] });
+    resultsPanel.hidden = stores.length === 0;
+    emptyState.hidden = stores.length > 0;
+    if (fit && stores.length) {
+      const bounds = new maplibregl.LngLatBounds();
+      stores.forEach(store => bounds.extend([store.longitud, store.latitud]));
+      map.fitBounds(bounds, { padding: 70, maxZoom: 13, duration: 850 });
+    }
+  };
+  map.on("style.load", () => {
+    installLayers();
+    renderStores(stores, false);
+  });
+  map.once("load", () => {
+    if (stores.length) renderStores(stores, true);
+    const initialStore = document.querySelector(".store-map-canvas-card")?.dataset.selectedStore;
+    if (initialStore) window.setTimeout(() => focusStore(initialStore), 500);
+  });
+  map.on("click", "store-clusters", async event => {
+    const feature = map.queryRenderedFeatures(event.point, { layers: ["store-clusters"] })[0];
+    if (!feature) return;
+    const zoom = await map.getSource("stores").getClusterExpansionZoom(feature.properties.cluster_id);
+    map.easeTo({ center: feature.geometry.coordinates, zoom, duration: 650 });
+  });
+  map.on("click", "store-points", event => focusStore(event.features[0].properties.id));
+  ["store-clusters", "store-points"].forEach(layer => {
+    map.on("mouseenter", layer, () => { map.getCanvas().style.cursor = "pointer"; });
+    map.on("mouseleave", layer, () => { map.getCanvas().style.cursor = ""; });
+  });
+  document.querySelectorAll("[data-map-style]").forEach(button => button.addEventListener("click", () => {
+    if (button.dataset.mapStyle === currentFlavor) return;
+    currentFlavor = button.dataset.mapStyle;
+    document.querySelectorAll("[data-map-style]").forEach(item => item.classList.toggle("is-active", item === button));
+    map.setStyle(buildStyle(currentFlavor), { diff: false });
+  }));
+
+  const filterForm = document.getElementById("storeMapFilters");
+  const mapCard = document.querySelector(".store-map-canvas-card");
+  const submitButton = document.querySelector("[data-map-submit]");
+  const pendingPanel = document.querySelector("[data-map-pending]");
+  const pendingCount = document.querySelector("[data-map-pending-count]");
+  const pendingList = document.querySelector("[data-map-pending-list]");
+  let filterRequest = null;
+  const updateStats = payload => Object.entries({ total: payload.total, localizadas: payload.localizadas, pendientes: payload.pendientes }).forEach(([key, value]) => {
+    const node = document.querySelector(`[data-map-stat="${key}"]`);
+    if (node) node.textContent = value;
+  });
+  const updatePending = payload => {
+    pendingPanel.hidden = payload.pendientes === 0;
+    pendingCount.textContent = `${payload.pendientes} tienda${payload.pendientes === 1 ? "" : "s"}`;
+    pendingList.replaceChildren();
+    payload.pendientes_tiendas.forEach(store => {
+      const article = document.createElement("article");
+      article.className = "pending-store";
+      const name = document.createElement("strong");
+      name.textContent = store.nombre;
+      const address = document.createElement("span");
+      address.textContent = [store.direccion || "Sin dirección", store.ciudad || store.estado].filter(Boolean).join(", ");
+      article.append(name, address);
+      pendingList.appendChild(article);
+    });
+  };
+  const applyFilters = async (updateHistory = true) => {
+    filterRequest?.abort();
+    filterRequest = new AbortController();
+    const currentRequest = filterRequest;
+    const url = new URL(filterForm.action || window.location.href, window.location.origin);
+    url.search = new URLSearchParams(new FormData(filterForm)).toString();
+    filterForm.classList.add("is-loading");
+    mapCard.classList.add("is-updating");
+    submitButton.textContent = "Actualizando…";
+    try {
+      const response = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" }, signal: currentRequest.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const payload = await response.json();
+      stores = payload.marcadores;
+      renderStores(stores);
+      updateStats(payload);
+      updatePending(payload);
+      if (updateHistory) window.history.pushState({}, "", url);
+    } catch (error) {
+      if (error.name !== "AbortError" && filterRequest === currentRequest) submitButton.textContent = "Error · Reintentar";
+    } finally {
+      if (filterRequest === currentRequest) {
+        filterForm.classList.remove("is-loading");
+        mapCard.classList.remove("is-updating");
+        if (submitButton.textContent !== "Error · Reintentar") submitButton.textContent = "Aplicar filtros";
+      }
+    }
+  };
+  filterForm.addEventListener("submit", event => { event.preventDefault(); applyFilters(); });
+  document.querySelector("[data-map-clear]")?.addEventListener("click", event => {
+    event.preventDefault();
+    filterForm.reset();
+    applyFilters();
+  });
+
+  const dialog = document.getElementById("coordinateDialog");
+  const storeSelect = document.getElementById("{{ coordenadas_form.tienda.id_for_label }}");
+  const latitudeInput = document.getElementById("{{ coordenadas_form.latitud.id_for_label }}");
+  const longitudeInput = document.getElementById("{{ coordenadas_form.longitud.id_for_label }}");
+  const coordinateData = new Map(JSON.parse(document.getElementById("coordinate-catalog-data").textContent).map(item => [String(item.id), item]));
+  document.querySelector("[data-coordinate-open]")?.addEventListener("click", () => dialog?.showModal());
+  document.querySelectorAll("[data-coordinate-close]").forEach(button => button.addEventListener("click", () => dialog?.close()));
+  storeSelect?.addEventListener("change", () => {
+    const selected = coordinateData.get(storeSelect.value);
+    latitudeInput.value = selected?.latitud ?? "";
+    longitudeInput.value = selected?.longitud ?? "";
+  });
+})();
+</script>
+{% endblock %}

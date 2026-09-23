@@ -1,0 +1,13 @@
+CAROBRA · OPERATIONS CENTER
+
+CONFIGURACIÓN VERIFICADA
+
+Este mensaje confirma que CAROBRA Tickets puede entregar notificaciones mediante el servidor SMTP configurado.
+
+Abrir el sistema:
+{{ access_url }}/login/
+
+Prueba enviada a: {{ destinatario }}
+
+Plataforma interna · Acceso exclusivo para personal autorizado
+CAROBRA Operations Center

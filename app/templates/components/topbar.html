@@ -1,0 +1,91 @@
+<header id="appTopbar" class="topbar">
+    <div class="topbar-left">
+        <button id="mobileMenuToggle" class="topbar-icon-button mobile-menu-toggle" type="button" aria-label="Alternar navegación" aria-controls="appSidebar" aria-expanded="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+
+        <div class="topbar-heading">
+            <div class="topbar-breadcrumb">
+                CAROBRA <span>/</span>
+                {% if request.resolver_match.namespace == "gestor" %}Gestor
+                {% elif request.resolver_match.url_name == "importaciones" or request.resolver_match.url_name == "importar_bradescard" or request.resolver_match.url_name == "confirmar_importacion_bradescard" or request.resolver_match.url_name == "importar_catalogos" %}Importaciones
+                {% elif request.resolver_match.url_name == "inventario" %}Inventario
+                {% elif request.resolver_match.url_name == "estructura" or request.resolver_match.url_name == "panel_configuracion" or request.resolver_match.url_name == "equipos" or request.resolver_match.url_name == "mapa_tiendas" %}Configuración
+                {% elif request.resolver_match.url_name == "usuarios_lista" or request.resolver_match.url_name == "usuario_crear" or request.resolver_match.url_name == "usuario_editar" %}Administración
+                {% elif request.resolver_match.url_name == "perfil" %}Cuenta
+                {% else %}Operación{% endif %}
+            </div>
+            <h1 class="topbar-title">
+                {% if request.resolver_match.namespace == "gestor" %}Gestor de pendientes
+                {% elif request.resolver_match.url_name == "territorio" %}Empresas y tiendas
+                {% elif request.resolver_match.url_name == "calendario" %}Equipos y calendario
+                {% elif request.resolver_match.url_name == "incidencias" %}Incidencias y tiempos
+                {% elif request.resolver_match.url_name == "permisos" %}Usuarios y permisos
+                {% elif request.resolver_match.url_name == "catalogo_nuevo" or request.resolver_match.url_name == "catalogo_editar" %}Configuración operativa
+                {% elif request.resolver_match.url_name == "admin_panel" %}Resumen ejecutivo
+                {% elif request.resolver_match.url_name == "mi_panel" %}Mi espacio de trabajo
+                {% elif request.resolver_match.url_name == "perfil" %}Mi perfil
+                {% elif request.resolver_match.url_name == "usuarios_lista" %}Usuarios y permisos
+                {% elif request.resolver_match.url_name == "usuario_crear" %}Nuevo usuario
+                {% elif request.resolver_match.url_name == "usuario_editar" %}Editar usuario
+                {% elif request.resolver_match.url_name == "lista" %}Tickets
+                {% elif request.resolver_match.url_name == "crear" %}Crear ticket CAROBRA
+                {% elif request.resolver_match.url_name == "detalle" %}Detalle del ticket
+                {% elif request.resolver_match.url_name == "inventario" %}Inventario
+                {% elif request.resolver_match.url_name == "importaciones" %}Centro de importaciones
+                {% elif request.resolver_match.url_name == "importar_bradescard" %}Importar tickets externos
+                {% elif request.resolver_match.url_name == "estructura" %}Configuración operativa
+                {% elif request.resolver_match.url_name == "panel_configuracion" %}Panel de configuración
+                {% elif request.resolver_match.url_name == "equipos" %}Equipos de trabajo
+                {% elif request.resolver_match.url_name == "importar_catalogos" %}Importar datos operativos
+                {% elif request.resolver_match.url_name == "mapa_tiendas" %}Mapa de tiendas
+                {% else %}Centro de operaciones{% endif %}
+            </h1>
+        </div>
+    </div>
+
+    <div class="topbar-actions">
+        <button id="themeToggle" class="topbar-icon-button theme-button" type="button" aria-label="Cambiar tema" aria-pressed="false" title="Cambiar tema">
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none"><path d="M20 15.3A8 8 0 0 1 8.7 4 8.5 8.5 0 1 0 20 15.3Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+
+        <div class="topbar-divider"></div>
+
+        <div class="user-menu-wrapper">
+            <button id="userMenuToggle" class="user-menu-toggle" type="button" aria-haspopup="true" aria-expanded="false">
+                <span class="user-avatar">{% if request.user.perfil.foto %}<img class="avatar-image" src="{% url 'usuario_foto' request.user.id %}?v={{ request.user.perfil.actualizado_at|date:'U' }}" alt="">{% else %}{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}{% endif %}</span>
+                <span class="user-menu-copy">
+                    <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                    <small>{% if request.user.is_superuser or request.user.perfil.rol == "ADMIN" %}Administrador{% else %}Usuario operativo{% endif %}</small>
+                </span>
+                <svg class="user-menu-chevron" viewBox="0 0 24 24" fill="none"><path d="m8 10 4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+
+            <div id="userDropdown" class="user-dropdown" role="menu" aria-hidden="true">
+                <div class="user-dropdown-header">
+                    <span class="user-dropdown-avatar">{% if request.user.perfil.foto %}<img class="avatar-image" src="{% url 'usuario_foto' request.user.id %}?v={{ request.user.perfil.actualizado_at|date:'U' }}" alt="">{% else %}{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}{% endif %}</span>
+                    <div>
+                        <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                        {% if request.user.email %}<span>{{ request.user.email }}</span>{% endif %}
+                    </div>
+                </div>
+
+                <div class="user-dropdown-divider"></div>
+                <a href="{% url 'perfil' %}" class="user-dropdown-item" role="menuitem">
+                    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M5 20c.8-4.5 3.1-7 7-7s6.2 2.5 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                    <span>Mi perfil</span>
+                </a>
+
+                <div class="user-dropdown-divider"></div>
+                <form method="post" action="{% url 'logout' %}" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="user-dropdown-item user-dropdown-danger" role="menuitem">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Cerrar sesión</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</header>

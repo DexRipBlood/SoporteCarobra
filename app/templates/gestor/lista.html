@@ -1,0 +1,55 @@
+{% extends "gestor/base.html" %}
+{% block gestor_content %}
+<header class="gst-heading">
+    <div><span class="gst-eyebrow">Seguimiento interno · Administración</span><h2>Gestor de Pendientes</h2><p>Lo que sigue, quién lo atiende y qué necesita avanzar.</p></div>
+    <a href="{% url 'gestor:crear' %}" class="gst-btn gst-btn-primary">＋ Nuevo pendiente</a>
+</header>
+<div class="gst-small">Resumen global · Los indicadores cuentan pendientes abiertos de todos los responsables.</div>
+<section class="gst-kpis" aria-label="Resumen de pendientes">
+    <a class="gst-kpi" href="?vista=abiertos"><span>Abiertos</span><strong>{{ kpis.abiertos }}</strong></a>
+    <a class="gst-kpi is-danger" href="?vista=vencidos"><span>Vencidos</span><strong>{{ kpis.vencidos }}</strong></a>
+    <a class="gst-kpi is-warning" href="?vista=hoy"><span>Hoy</span><strong>{{ kpis.hoy }}</strong></a>
+    <a class="gst-kpi is-warning" href="?vista=espera"><span>En espera</span><strong>{{ kpis.espera }}</strong></a>
+    <a class="gst-kpi is-danger" href="?vista=criticos"><span>Críticos</span><strong>{{ kpis.criticos }}</strong></a>
+    <a class="gst-kpi" href="?vista=sin_responsable"><span>Sin responsable</span><strong>{{ kpis.sin_responsable }}</strong></a>
+</section>
+<nav class="gst-views" aria-label="Vistas rápidas">
+    {% for acceso in accesos %}<a href="?{{ acceso.query }}" class="{% if acceso.clave == vista %}is-active{% endif %}" {% if acceso.clave == vista %}aria-current="page"{% endif %}>{{ acceso.etiqueta }}</a>{% endfor %}
+</nav>
+<form method="get" class="gst-card gst-filters">
+    <input type="hidden" name="vista" value="{{ vista }}">
+    {{ form.non_field_errors }}
+    <div class="gst-search"><div class="gst-field">{{ form.q.label_tag }}{{ form.q }}{{ form.q.errors }}</div><button type="submit" class="gst-btn gst-btn-primary">Buscar / aplicar</button><a class="gst-btn" href="{% url 'gestor:lista' %}">Limpiar</a></div>
+    <details {% if request.GET or form.errors %}open{% endif %}><summary>Filtrar por estado, persona, área, tienda y fechas</summary><div class="gst-filter-grid">
+        {% for field in form %}{% if field.name != 'q' %}<div class="gst-field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endif %}{% endfor %}
+    </div></details>
+</form>
+<section class="gst-card">
+    <header class="gst-card-head"><h3>Pendientes <span class="gst-muted">({{ pagina.paginator.count }})</span></h3><span class="gst-small">Más recientes primero</span></header>
+    {% if pagina %}<div class="gst-table-wrap" tabindex="0" role="region" aria-label="Tabla de pendientes, desplazamiento horizontal disponible"><table class="gst-table">
+        <thead><tr><th scope="col">Señal</th><th scope="col">Folio</th><th scope="col">Tarea</th><th scope="col">TDA</th><th scope="col">Prioridad</th><th scope="col">Estado</th><th scope="col">Responsable</th><th scope="col">Siguiente acción</th><th scope="col">Compromiso</th><th scope="col">Bloqueo</th><th scope="col">Atraso</th></tr></thead>
+        <tbody>{% for p in pagina %}<tr>
+            <td><span class="gst-dot gst-dot-{{ p.semaforo }}" role="img" aria-label="Semáforo {{ p.semaforo }}" title="{{ p.semaforo }}"></span></td>
+            <td><a href="{% url 'gestor:detalle' p.folio %}" class="gst-small">{{ p.folio }}</a></td>
+            <td class="gst-task">
+                <a class="gst-task-title" href="{% url 'gestor:detalle' p.folio %}"><strong>{{ p.titulo }}</strong></a>
+                <span class="gst-small">{{ p.get_area_display }} · {{ p.get_tipo_trabajo_display }}</span>
+                <div class="gst-task-actions">
+                    <a class="gst-btn" href="{% url 'gestor:detalle' p.folio %}" aria-label="Abrir pendiente {{ p.folio }}">Abrir pendiente</a>
+                    <a class="gst-btn gst-btn-primary" href="{% url 'gestor:editar' p.folio %}" aria-label="Dar seguimiento a {{ p.folio }}">Dar seguimiento</a>
+                </div>
+            </td>
+            <td>{{ p.tda.nombre|default:"General" }}</td>
+            <td><span class="gst-badge gst-priority-{{ p.prioridad }}">{{ p.get_prioridad_display }}</span></td>
+            <td><span class="gst-badge gst-state-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
+            <td>{% if p.responsable %}{{ p.responsable.get_full_name|default:p.responsable.username }}{% else %}<span class="gst-muted">Sin responsable</span>{% endif %}</td>
+            <td class="gst-next">{{ p.siguiente_accion|default:"Por definir"|truncatechars:100 }}</td>
+            <td class="{% if p.vencido %}gst-danger{% endif %}">{{ p.fecha_compromiso|date:"d M Y"|default:"Sin fecha" }}</td>
+            <td class="gst-next">{{ p.get_bloqueo_display }}{% if p.bloqueado_por %}<div class="gst-small">{{ p.bloqueado_por|truncatechars:65 }}</div>{% endif %}</td>
+            <td>{% if p.dias_atraso %}<span class="gst-danger">{{ p.dias_atraso }} d</span>{% else %}—{% endif %}</td>
+        </tr>{% endfor %}</tbody>
+    </table></div>{% else %}<div class="gst-empty"><h3>No hay pendientes en esta vista</h3><p>Ajusta los filtros o registra el primer pendiente.</p><a class="gst-btn gst-btn-primary" href="{% url 'gestor:crear' %}">Crear pendiente</a></div>{% endif %}
+</section>
+<nav class="gst-pagination" aria-label="Paginación"><span class="gst-small">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span><div class="gst-actions">{% if pagina.has_previous %}<a class="gst-btn" href="?{{ parametros }}&amp;page={{ pagina.previous_page_number }}">← Anterior</a>{% endif %}{% if pagina.has_next %}<a class="gst-btn" href="?{{ parametros }}&amp;page={{ pagina.next_page_number }}">Siguiente →</a>{% endif %}</div></nav>
+<p class="gst-small">Semáforo: rojo = vencido; amarillo = compromiso en los próximos 2 días o requiere atención; verde = dentro de tiempo; gris = completado o cancelado.</p>
+{% endblock %}

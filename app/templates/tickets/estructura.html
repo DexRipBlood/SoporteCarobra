@@ -1,0 +1,9 @@
+{% extends "tickets/operacion/base.html" %}
+{% block title %}Configuración operativa · CAROBRA{% endblock %}
+{% block panel %}<header class="op-head"><div><span class="op-kicker">Centro de configuración</span><h2>Una operación conectada</h2><p>Tiendas, equipos y tiempos que se reflejan en cada ticket.</p></div><a class="op-btn" href="{% url 'tickets:importaciones' %}">Importaciones</a></header>
+<div class="op-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+<a class="op-card" href="{% url 'tickets:territorio' %}"><span class="op-kicker">Territorio</span><h3 style="margin-top:15px">Empresas y tiendas</h3><p class="op-muted">Ubicaciones, distritos, distritales de Activos, encargados y partners.</p><footer>{{ resumen.empresas }} empresas · {{ resumen.tiendas }} tiendas →</footer></a>
+<a class="op-card" href="{% url 'tickets:calendario' %}"><span class="op-kicker">Disponibilidad</span><h3 style="margin-top:15px">Equipos y calendario</h3><p class="op-muted">Actividades, horarios, home office, guardias y descansos.</p><footer>{{ resumen.equipos }} grupos · {{ resumen.turnos }} programaciones →</footer></a>
+<a class="op-card" href="{% url 'tickets:permisos' %}"><span class="op-kicker">Acceso</span><h3 style="margin-top:15px">Usuarios y permisos</h3><p class="op-muted">Define quién consulta, atiende, reasigna y cierra tickets.</p><footer>Administrar permisos →</footer></a>
+<a class="op-card" href="{% url 'tickets:incidencias' %}"><span class="op-kicker">Atención</span><h3 style="margin-top:15px">Incidencias y tiempos</h3><p class="op-muted">Prioridades y SLA por categoría e incidencia.</p><footer>{{ resumen.sla }} reglas activas →</footer></a>
+</div>{% endblock %}

@@ -1,0 +1,8 @@
+Django==5.2.5
+gunicorn==23.0.0
+psycopg[binary]==3.2.9
+python-dotenv==1.1.1
+Pillow==11.3.0
+whitenoise>=6.6,<7
+openpyxl==3.1.5
+django-allauth[socialaccount]>=65.0,<66

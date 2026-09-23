@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Mi perfil · CAROBRA Operations{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <section class="profile-hero" aria-labelledby="profileTitle">
+        <div class="profile-hero-motion" aria-hidden="true">
+            <span class="profile-orbit profile-orbit-one"></span>
+            <span class="profile-orbit profile-orbit-two"></span>
+            <span class="profile-pulse"></span>
+        </div>
+
+        <div class="profile-identity">
+            <div class="profile-avatar" aria-hidden="true">
+                {% if perfil.foto %}<img class="avatar-image" src="{% url 'usuario_foto' request.user.id %}?v={{ perfil.actualizado_at|date:'U' }}" alt="">{% else %}{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}{% endif %}
+                <span class="profile-avatar-status"></span>
+            </div>
+            <div class="profile-copy">
+                <span>Cuenta corporativa</span>
+                <h2 id="profileTitle">{{ request.user.get_full_name|default:request.user.username }}</h2>
+                <p>Mantén tu información actualizada para identificar responsables, asignaciones y actividad dentro del sistema.</p>
+            </div>
+        </div>
+
+        <div class="profile-completion" style="--profile-progress: {{ completion_percentage }};">
+            <div class="profile-progress-ring" aria-hidden="true">
+                <div><strong>{{ completion_percentage }}</strong><span>%</span></div>
+            </div>
+            <div class="profile-completion-copy">
+                <strong>Perfil completado</strong>
+                <span>{% if completion_percentage == 100 %}Información al día{% else %}Completa los campos pendientes{% endif %}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="profile-grid">
+        <form method="post" enctype="multipart/form-data" class="profile-form" data-profile-form novalidate>
+            {% csrf_token %}
+
+            <article class="profile-card profile-form-card">
+                <header class="profile-card-head">
+                    <div class="profile-card-heading">
+                        <span class="profile-card-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M5 20c.8-4.5 3.1-7 7-7s6.2 2.5 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                        </span>
+                        <div class="profile-card-title">
+                            <h3>Información personal</h3>
+                            <p>Datos visibles para identificar tu actividad operativa</p>
+                        </div>
+                    </div>
+                    <span class="profile-form-state" data-profile-state aria-live="polite">Sin cambios</span>
+                </header>
+
+                {% if form.non_field_errors %}
+                    <div class="profile-form-alert" role="alert">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="profile-fields">
+                    <div class="profile-field-wide">
+                        {% include "components/avatar_editor.html" with avatar_user=request.user avatar_perfil=perfil %}
+                    </div>
+
+                    <div class="profile-field {% if form.first_name.errors %}has-error{% endif %}">
+                        <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }} <span>*</span></label>
+                        <div class="profile-input-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M6 19c.7-3.8 2.7-6 6-6s5.3 2.2 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                            {{ form.first_name }}
+                        </div>
+                        {% for error in form.first_name.errors %}<p class="profile-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="profile-field {% if form.last_name.errors %}has-error{% endif %}">
+                        <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                        <div class="profile-input-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M6 19c.7-3.8 2.7-6 6-6s5.3 2.2 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                            {{ form.last_name }}
+                        </div>
+                        {% for error in form.last_name.errors %}<p class="profile-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="profile-field profile-field-wide {% if form.email.errors %}has-error{% endif %}">
+                        <label for="{{ form.email.id_for_label }}">{{ form.email.label }} <span>*</span></label>
+                        <div class="profile-input-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="m5 7 7 5 7-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            {{ form.email }}
+                        </div>
+                        <p class="profile-field-help">Este correo se utilizará posteriormente para vincular Google Workspace.</p>
+                        {% for error in form.email.errors %}<p class="profile-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="profile-fields-divider profile-field-wide"><span>Información corporativa</span></div>
+
+                    <div class="profile-field {% if form.numero_empleado.errors %}has-error{% endif %}">
+                        <label for="{{ form.numero_empleado.id_for_label }}">{{ form.numero_empleado.label }}</label>
+                        <div class="profile-input-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 9h4M8 13h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                            {{ form.numero_empleado }}
+                        </div>
+                        {% for error in form.numero_empleado.errors %}<p class="profile-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="profile-field {% if form.telefono.errors %}has-error{% endif %}">
+                        <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
+                        <div class="profile-input-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.2 3.8 10 8.2 8.1 10a14 14 0 0 0 5.9 5.9l1.8-1.9 4.4 2.8c.4.3.6.8.4 1.3-.6 1.7-2.2 2.8-4 2.7A14.3 14.3 0 0 1 3.2 7.4c-.1-1.8 1-3.4 2.7-4 .5-.2 1 0 1.3.4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            {{ form.telefono }}
+                        </div>
+                        {% for error in form.telefono.errors %}<p class="profile-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="profile-field {% if form.area.errors %}has-error{% endif %}">
+                        <label for="{{ form.area.id_for_label }}">{{ form.area.label }}</label>
+                        <div class="profile-input-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20V8l8-4 8 4v12M8 20v-5h8v5M8 9h.01M12 9h.01M16 9h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            {{ form.area }}
+                        </div>
+                        {% for error in form.area.errors %}<p class="profile-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <div class="profile-field {% if form.cargo.errors %}has-error{% endif %}">
+                        <label for="{{ form.cargo.id_for_label }}">{{ form.cargo.label }}</label>
+                        <div class="profile-input-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M9 7V5.5h6V7M4 11.5c4.8 2.3 11.2 2.3 16 0M12 12.5v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            {{ form.cargo }}
+                        </div>
+                        {% for error in form.cargo.errors %}<p class="profile-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                </div>
+
+                <footer class="profile-form-footer">
+                    <div class="profile-save-note"><span class="profile-save-dot" aria-hidden="true"></span><span>Los cambios se guardan en tu cuenta del sistema.</span></div>
+                    <button type="submit" class="system-button profile-save-button" data-profile-submit>
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 4v6h8V4M8 20v-6h8v6" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+                        <span data-profile-submit-label>Guardar cambios</span>
+                    </button>
+                </footer>
+            </article>
+        </form>
+
+        <aside class="profile-side-column">
+            <article class="profile-card profile-account-card">
+                <header class="profile-card-head">
+                    <div class="profile-card-heading">
+                        <span class="profile-card-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v5c0 4.5 2.8 8.1 7 10 4.2-1.9 7-5.5 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <div class="profile-card-title"><h3>Cuenta y acceso</h3><p>Información protegida por el sistema</p></div>
+                    </div>
+                </header>
+
+                <div class="profile-account-list">
+                    <div class="profile-account-row"><span>Usuario</span><strong>{{ request.user.username }}</strong></div>
+                    <div class="profile-account-row"><span>Rol asignado</span><strong>{% if request.user.is_superuser or perfil.rol == "ADMIN" %}Administrador{% else %}Usuario operativo{% endif %}</strong></div>
+                    <div class="profile-account-row">
+                        <span>Estado</span>
+                        <strong class="profile-status {% if perfil.activo and request.user.is_active %}is-active{% endif %}"><i></i>{% if perfil.activo and request.user.is_active %}Activa{% else %}Restringida{% endif %}</strong>
+                    </div>
+                    <div class="profile-account-row"><span>Último acceso</span><strong>{{ request.user.last_login|date:"d/m/Y · H:i"|default:"Primer acceso" }}</strong></div>
+                </div>
+
+                <div class="profile-protected-note">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    <p>El usuario, rol y estado solo pueden modificarse desde administración.</p>
+                </div>
+            </article>
+
+            <article class="profile-card profile-integration-card">
+                <div class="profile-integration-icon" aria-hidden="true">G</div>
+                <div class="profile-integration-copy">
+                    <div><span class="profile-coming-badge">Próximamente</span><h3>Google Workspace</h3></div>
+                    <p>La cuenta podrá vincularse con el correo corporativo cuando el sistema tenga dominio y HTTPS.</p>
+                </div>
+            </article>
+        </aside>
+    </section>
+</div>
+{% endblock %}

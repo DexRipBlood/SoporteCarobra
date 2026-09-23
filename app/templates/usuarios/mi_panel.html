@@ -1,0 +1,1338 @@
+{% extends "base.html" %}
+
+{% block title %}
+Mi panel · CAROBRA Tickets
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+
+    /* =====================================================
+       DASHBOARD USER
+    ====================================================== */
+
+    .user-dashboard {
+        max-width: 1500px;
+        margin: 0 auto;
+    }
+
+
+    /* =====================================================
+       BIENVENIDA
+    ====================================================== */
+
+    .user-welcome {
+        position: relative;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 24px;
+
+        padding: clamp(22px, 3vw, 34px);
+
+        border: 1px solid var(--border);
+        border-radius: 24px;
+
+        background:
+            radial-gradient(
+                circle at 92% 10%,
+                rgba(59, 110, 245, .16),
+                transparent 22rem
+            ),
+            linear-gradient(
+                145deg,
+                var(--surface),
+                var(--surface-2)
+            );
+
+        overflow: hidden;
+
+        box-shadow: var(--shadow-sm);
+    }
+
+    .user-welcome::before {
+        content: "";
+
+        position: absolute;
+        right: -100px;
+        bottom: -170px;
+
+        width: 320px;
+        height: 320px;
+
+        border-radius: 50%;
+
+        background: rgba(59, 110, 245, .05);
+
+        pointer-events: none;
+    }
+
+    .user-welcome-copy {
+        position: relative;
+        z-index: 2;
+
+        max-width: 760px;
+    }
+
+    .user-welcome-status {
+        display: inline-flex;
+        align-items: center;
+
+        gap: 8px;
+
+        margin-bottom: 12px;
+
+        color: var(--success);
+
+        font-size: 10px;
+        font-weight: 800;
+
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .user-welcome-status::before {
+        content: "";
+
+        width: 7px;
+        height: 7px;
+
+        border-radius: 50%;
+
+        background: var(--success);
+
+        box-shadow:
+            0 0 0 5px var(--success-soft);
+    }
+
+    .user-welcome h2 {
+        margin: 0;
+
+        font-size: clamp(25px, 3vw, 37px);
+        font-weight: 790;
+
+        letter-spacing: -.045em;
+    }
+
+    .user-welcome p {
+        max-width: 650px;
+
+        margin: 10px 0 0;
+
+        color: var(--muted);
+
+        font-size: 13px;
+        line-height: 1.65;
+    }
+
+
+    /* =====================================================
+       USER BADGE
+    ====================================================== */
+
+    .user-role-card {
+        position: relative;
+        z-index: 2;
+
+        flex: 0 0 auto;
+
+        display: flex;
+        align-items: center;
+
+        gap: 10px;
+
+        padding: 11px 14px;
+
+        border: 1px solid rgba(59, 110, 245, .16);
+        border-radius: 15px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+    }
+
+    .user-role-card svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .user-role-card div {
+        display: flex;
+        flex-direction: column;
+
+        gap: 1px;
+    }
+
+    .user-role-card strong {
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .user-role-card span {
+        font-size: 9px;
+        opacity: .75;
+    }
+
+
+    /* =====================================================
+       MÉTRICAS
+    ====================================================== */
+
+    .user-stats {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 14px;
+
+        margin-top: 18px;
+    }
+
+    .user-stat {
+        position: relative;
+
+        min-height: 126px;
+
+        padding: 18px;
+
+        border: 1px solid var(--border);
+        border-radius: 19px;
+
+        background: var(--surface);
+
+        overflow: hidden;
+
+        transition:
+            transform 160ms var(--ease-standard),
+            border-color 160ms ease,
+            box-shadow 160ms ease;
+    }
+
+    .user-stat:hover {
+        transform: translateY(-3px);
+
+        border-color: var(--border-strong);
+
+        box-shadow: var(--shadow-md);
+    }
+
+    .user-stat-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 10px;
+    }
+
+    .user-stat-label {
+        color: var(--muted);
+
+        font-size: 10px;
+        font-weight: 650;
+    }
+
+    .user-stat-icon {
+        width: 34px;
+        height: 34px;
+
+        display: grid;
+        place-items: center;
+
+        border-radius: 11px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+    }
+
+    .user-stat-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .user-stat-value {
+        margin-top: 16px;
+
+        font-size: 27px;
+        font-weight: 790;
+
+        letter-spacing: -.04em;
+    }
+
+    .user-stat-detail {
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+    .user-stat.warning .user-stat-icon {
+        background: var(--warning-soft);
+        color: var(--warning);
+    }
+
+    .user-stat.danger .user-stat-icon {
+        background: var(--danger-soft);
+        color: var(--danger);
+    }
+
+
+    /* =====================================================
+       GRID
+    ====================================================== */
+
+    .user-dashboard-grid {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1.6fr)
+            minmax(300px, .85fr);
+
+        gap: 18px;
+
+        margin-top: 18px;
+    }
+
+    .user-dashboard-column {
+        display: flex;
+        flex-direction: column;
+
+        gap: 18px;
+    }
+
+
+    /* =====================================================
+       PANEL
+    ====================================================== */
+
+    .user-panel {
+        border: 1px solid var(--border);
+        border-radius: 21px;
+
+        background: var(--surface);
+
+        box-shadow: var(--shadow-sm);
+
+        overflow: hidden;
+    }
+
+    .user-panel-header {
+        min-height: 66px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 14px;
+
+        padding: 16px 18px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+    .user-panel-title h3 {
+        margin: 0;
+
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .user-panel-title p {
+        margin: 4px 0 0;
+
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+    .user-panel-action {
+        color: var(--primary);
+
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+
+    /* =====================================================
+       PRIORIDAD DE ATENCIÓN
+    ====================================================== */
+
+    .priority-placeholder {
+        padding: 18px;
+    }
+
+    .priority-card {
+        position: relative;
+
+        display: flex;
+        align-items: center;
+
+        gap: 14px;
+
+        padding: 15px;
+
+        border: 1px solid var(--border);
+        border-radius: 16px;
+
+        background: var(--surface-2);
+
+        overflow: hidden;
+    }
+
+    .priority-card::before {
+        content: "";
+
+        position: absolute;
+        inset: 0 auto 0 0;
+
+        width: 3px;
+
+        background: var(--warning);
+    }
+
+    .priority-icon {
+        flex: 0 0 38px;
+
+        width: 38px;
+        height: 38px;
+
+        display: grid;
+        place-items: center;
+
+        border-radius: 12px;
+
+        background: var(--warning-soft);
+
+        color: var(--warning);
+    }
+
+    .priority-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .priority-copy {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .priority-copy strong {
+        display: block;
+
+        font-size: 11px;
+    }
+
+    .priority-copy span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 9px;
+        line-height: 1.45;
+    }
+
+    .priority-badge {
+        flex: 0 0 auto;
+
+        padding: 5px 8px;
+
+        border-radius: 999px;
+
+        background: var(--warning-soft);
+
+        color: var(--warning);
+
+        font-size: 8px;
+        font-weight: 800;
+
+        letter-spacing: .04em;
+    }
+
+
+    /* =====================================================
+       SLA PERSONAL
+    ====================================================== */
+
+    .my-sla {
+        padding: 18px;
+    }
+
+    .sla-summary {
+        display: grid;
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+    .sla-summary-item {
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 15px;
+
+        background: var(--surface-2);
+    }
+
+    .sla-summary-item span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+    .sla-summary-item strong {
+        display: block;
+
+        margin-top: 8px;
+
+        font-size: 19px;
+        font-weight: 780;
+    }
+
+    .sla-summary-item.risk strong {
+        color: var(--warning);
+    }
+
+    .sla-summary-item.late strong {
+        color: var(--danger);
+    }
+
+    .sla-progress-demo {
+        margin-top: 14px;
+
+        padding: 15px;
+
+        border: 1px solid var(--border);
+        border-radius: 15px;
+
+        background: var(--surface-2);
+    }
+
+    .sla-progress-head {
+        display: flex;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        margin-bottom: 10px;
+
+        font-size: 9px;
+    }
+
+    .sla-progress-head span {
+        color: var(--muted);
+    }
+
+    .sla-progress-track {
+        height: 7px;
+
+        border-radius: 999px;
+
+        background: var(--surface-3);
+
+        overflow: hidden;
+    }
+
+    .sla-progress-fill {
+        width: 72%;
+        height: 100%;
+
+        border-radius: inherit;
+
+        background:
+            linear-gradient(
+                90deg,
+                var(--primary),
+                #6d93ff
+            );
+
+        animation:
+            userSlaEnter
+            600ms
+            var(--ease-spring)
+            both;
+    }
+
+    @keyframes userSlaEnter {
+        from {
+            width: 0;
+        }
+    }
+
+
+    /* =====================================================
+       ACTIVIDAD
+    ====================================================== */
+
+    .activity-empty {
+        padding: 30px 20px;
+
+        text-align: center;
+    }
+
+    .activity-empty-icon {
+        width: 46px;
+        height: 46px;
+
+        display: grid;
+        place-items: center;
+
+        margin: 0 auto 12px;
+
+        border-radius: 14px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+    }
+
+    .activity-empty-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .activity-empty strong {
+        display: block;
+
+        font-size: 11px;
+    }
+
+    .activity-empty span {
+        display: block;
+
+        max-width: 420px;
+
+        margin: 5px auto 0;
+
+        color: var(--muted);
+
+        font-size: 9px;
+        line-height: 1.55;
+    }
+
+
+    /* =====================================================
+       ACCESOS RÁPIDOS
+    ====================================================== */
+
+    .user-quick-actions {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 10px;
+
+        padding: 15px;
+    }
+
+    .user-quick-action {
+        min-height: 92px;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 16px;
+
+        background: var(--surface-2);
+
+        transition:
+            transform 160ms var(--ease-standard),
+            background 160ms ease,
+            border-color 160ms ease;
+    }
+
+    .user-quick-action:hover {
+        transform: translateY(-2px);
+
+        background: var(--hover);
+
+        border-color: var(--border-strong);
+    }
+
+    .user-quick-action svg {
+        width: 19px;
+        height: 19px;
+
+        color: var(--primary);
+    }
+
+    .user-quick-action strong {
+        display: block;
+
+        font-size: 10px;
+    }
+
+    .user-quick-action span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+    .user-quick-action.is-disabled {
+        opacity: .48;
+        pointer-events: none;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1100px) {
+
+        .user-stats {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+        .user-dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .user-welcome {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .user-role-card {
+            align-self: flex-start;
+        }
+
+        .user-stats {
+            gap: 10px;
+        }
+
+        .user-stat {
+            min-height: 112px;
+            padding: 14px;
+        }
+
+        .user-stat-value {
+            font-size: 23px;
+        }
+
+        .sla-summary {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 430px) {
+
+        .user-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .user-quick-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .priority-card {
+            align-items: flex-start;
+        }
+
+        .priority-badge {
+            display: none;
+        }
+
+    }
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="user-dashboard">
+
+
+    <!-- =================================================
+         BIENVENIDA
+    ================================================== -->
+
+    <section class="user-welcome">
+
+        <div class="user-welcome-copy">
+
+            <div class="user-welcome-status">
+                Sesión activa
+            </div>
+
+            <h2>
+                Hola,
+                {% if request.user.first_name %}
+                    {{ request.user.first_name }}
+                {% else %}
+                    {{ request.user.username }}
+                {% endif %}
+            </h2>
+
+            <p>
+                Aquí encontrarás tus tickets, prioridades de atención,
+                tiempos SLA y los movimientos que necesitan tu seguimiento.
+            </p>
+
+        </div>
+
+
+        <div class="user-role-card">
+
+            <svg viewBox="0 0 24 24" fill="none">
+                <circle
+                    cx="12"
+                    cy="8"
+                    r="3.5"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                />
+
+                <path
+                    d="M5 20c.8-4.5 3.1-7 7-7s6.2 2.5 7 7"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                />
+            </svg>
+
+            <div>
+                <strong>USUARIO</strong>
+                <span>Panel operativo</span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         MÉTRICAS PERSONALES
+    ================================================== -->
+
+    <section class="user-stats">
+
+
+        <article class="user-stat">
+
+            <div class="user-stat-head">
+
+                <span class="user-stat-label">
+                    Mis tickets
+                </span>
+
+                <span class="user-stat-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M5 5.5h14v4a2.5 2.5 0 0 0 0 5v4H5v-4a2.5 2.5 0 0 0 0-5v-4Z"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+                    </svg>
+
+                </span>
+
+            </div>
+
+            <div class="user-stat-value">
+                {{ dashboard.en_proceso }}
+            </div>
+
+            <div class="user-stat-detail">
+                Tickets asignados a ti
+            </div>
+
+        </article>
+
+
+        <article class="user-stat">
+
+            <div class="user-stat-head">
+
+                <span class="user-stat-label">
+                    En proceso
+                </span>
+
+                <span class="user-stat-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+
+                        <path
+                            d="M12 7v5l3 2"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+
+                </span>
+
+            </div>
+
+            <div class="user-stat-value">
+                {{ dashboard.activos }}
+            </div>
+
+            <div class="user-stat-detail">
+                Trabajándose actualmente
+            </div>
+
+        </article>
+
+
+        <article class="user-stat warning">
+
+            <div class="user-stat-head">
+
+                <span class="user-stat-label">
+                    SLA en riesgo
+                </span>
+
+                <span class="user-stat-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M12 4 3.5 19h17L12 4Z"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+
+                        <path
+                            d="M12 9v4"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+
+                </span>
+
+            </div>
+
+            <div class="user-stat-value">
+                {{ dashboard.en_riesgo }}
+            </div>
+
+            <div class="user-stat-detail">
+                Requieren atención pronto
+            </div>
+
+        </article>
+
+
+        <article class="user-stat danger">
+
+            <div class="user-stat-head">
+
+                <span class="user-stat-label">
+                    SLA excedido
+                </span>
+
+                <span class="user-stat-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+
+                        <path
+                            d="M12 7v6M12 16.5v.5"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+
+                </span>
+
+            </div>
+
+            <div class="user-stat-value">
+                {{ dashboard.excedidos }}
+            </div>
+
+            <div class="user-stat-detail">
+                Fuera del tiempo objetivo
+            </div>
+
+        </article>
+
+
+    </section>
+
+
+    <!-- =================================================
+         CONTENIDO
+    ================================================== -->
+
+    <section class="user-dashboard-grid">
+
+
+        <!-- IZQUIERDA -->
+        <div class="user-dashboard-column">
+
+
+            <!-- PRIORIDAD -->
+            <article class="user-panel">
+
+                <div class="user-panel-header">
+
+                    <div class="user-panel-title">
+                        <h3>Prioridad de atención</h3>
+                        <p>Lo más importante para trabajar ahora</p>
+                    </div>
+
+                    <a class="user-panel-action" href="{% url 'tickets:lista' %}">Ver mis tickets</a>
+
+                </div>
+
+
+                <div class="priority-placeholder">
+
+                    <div class="priority-card">
+
+                        <span class="priority-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path
+                                    d="M12 4 3.5 19h17L12 4Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"
+                                />
+
+                                <path
+                                    d="M12 9v4"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"
+                                    stroke-linecap="round"
+                                />
+                            </svg>
+
+                        </span>
+
+                        <div class="priority-copy">
+
+                            <strong>
+                                {{ dashboard.excedidos }} ticket{{ dashboard.excedidos|pluralize }} con SLA excedido
+                            </strong>
+
+                            <span>
+                                {{ dashboard.en_riesgo }} en riesgo y {{ dashboard.en_tiempo }} en tiempo.
+                            </span>
+
+                        </div>
+
+                        <span class="priority-badge">
+                            SLA
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <!-- SLA -->
+            <article class="user-panel">
+
+                <div class="user-panel-header">
+
+                    <div class="user-panel-title">
+                        <h3>Mi SLA</h3>
+                        <p>Estado de tiempos de tus tickets activos</p>
+                    </div>
+
+                </div>
+
+
+                <div class="my-sla">
+
+                    <div class="sla-summary">
+
+                        <div class="sla-summary-item">
+                            <span>En tiempo</span>
+                            <strong>{{ dashboard.en_tiempo }}</strong>
+                        </div>
+
+                        <div class="sla-summary-item risk">
+                            <span>En riesgo</span>
+                            <strong>{{ dashboard.en_riesgo }}</strong>
+                        </div>
+
+                        <div class="sla-summary-item late">
+                            <span>Excedidos</span>
+                            <strong>{{ dashboard.excedidos }}</strong>
+                        </div>
+
+                    </div>
+
+
+                    <div class="sla-progress-demo">
+
+                        <div class="sla-progress-head">
+
+                            <strong>
+                                Tiempo efectivo de atención
+                            </strong>
+
+                            <span>
+                                SLA personal
+                            </span>
+
+                        </div>
+
+                        <div class="sla-progress-track">
+                            <div class="sla-progress-fill"></div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <!-- ACTIVIDAD -->
+            <article class="user-panel">
+
+                <div class="user-panel-header">
+
+                    <div class="user-panel-title">
+                        <h3>Mi actividad reciente</h3>
+                        <p>Últimos movimientos relacionados contigo</p>
+                    </div>
+
+                </div>
+
+
+                <div class="activity-empty">
+
+                    <div class="activity-empty-icon">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M4 12h4l2-5 4 10 2-5h4"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                        </svg>
+
+                    </div>
+
+                    <strong>
+                        Aquí aparecerá tu actividad
+                    </strong>
+
+                    <span>
+                        Asignaciones, comentarios, cambios de estado,
+                        archivos y movimientos SLA.
+                    </span>
+
+                </div>
+
+            </article>
+
+
+        </div>
+
+
+        <!-- DERECHA -->
+        <div class="user-dashboard-column">
+
+
+            <!-- ACCESOS -->
+            <article class="user-panel">
+
+                <div class="user-panel-header">
+
+                    <div class="user-panel-title">
+                        <h3>Accesos rápidos</h3>
+                        <p>Herramientas para tu operación</p>
+                    </div>
+
+                </div>
+
+
+                <div class="user-quick-actions">
+
+
+                    <a
+                        href="{% url 'tickets:lista' %}"
+                        class="user-quick-action"
+                    >
+
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M5 5.5h14v4a2.5 2.5 0 0 0 0 5v4H5v-4a2.5 2.5 0 0 0 0-5v-4Z"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+                        </svg>
+
+                        <div>
+                            <strong>Mis tickets</strong>
+                            <span>Consultar tickets asignados</span>
+                        </div>
+
+                    </a>
+
+
+                    <a
+                        href="{% url 'perfil' %}"
+                        class="user-quick-action"
+                    >
+
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <circle
+                                cx="12"
+                                cy="8"
+                                r="3.5"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+
+                            <path
+                                d="M5 20c.8-4.5 3.1-7 7-7s6.2 2.5 7 7"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+                        </svg>
+
+                        <div>
+                            <strong>Mi perfil</strong>
+                            <span>Cuenta y preferencias</span>
+                        </div>
+
+                    </a>
+
+
+                    <div class="user-quick-action is-disabled">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M5 9h14l-1-5H6L5 9Z"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+
+                            <path
+                                d="M6 9v10h12V9"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+                        </svg>
+
+                        <div>
+                            <strong>Tiendas</strong>
+                            <span>Consulta operativa</span>
+                        </div>
+
+                    </div>
+
+
+                    <div class="user-quick-action is-disabled">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <circle
+                                cx="9"
+                                cy="8"
+                                r="3"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+
+                            <path
+                                d="M4 19c.6-4 2.3-6 5-6s4.4 2 5 6"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+                        </svg>
+
+                        <div>
+                            <strong>Personal activo</strong>
+                            <span>Personal por tienda</span>
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+            </article>
+
+
+            <!-- INFORMACIÓN -->
+            <article class="user-panel">
+
+                <div class="user-panel-header">
+
+                    <div class="user-panel-title">
+                        <h3>Tu operación</h3>
+                        <p>Información asociada a tu cuenta</p>
+                    </div>
+
+                </div>
+
+
+                <div class="activity-empty">
+
+                    <strong>
+                        Perfil operativo
+                    </strong>
+
+                    <span>
+                        Más adelante aquí mostraremos tu grupo,
+                        subgrupo, carga asignada y métricas de atención.
+                    </span>
+
+                </div>
+
+            </article>
+
+
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}

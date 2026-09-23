@@ -1,0 +1,64 @@
+<section class="tickets-panel" id="ticketsResults" aria-live="polite">
+    <div class="tickets-panel-head">
+        <strong>Resultados</strong>
+        <span>50 registros por página</span>
+    </div>
+
+    {% if pagina.object_list %}
+        <div class="tickets-table-wrap">
+            <table class="tickets-table">
+                <thead>
+                    <tr>
+                        <th><a class="tickets-sort-button {% if orden_actual == 'ticket' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=ticket&amp;direccion={% if orden_actual == 'ticket' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Ticket <span class="tickets-sort-indicator">{% if orden_actual == 'ticket' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a></th>
+                        <th><a class="tickets-sort-button {% if orden_actual == 'tienda' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=tienda&amp;direccion={% if orden_actual == 'tienda' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Tienda / incidencia <span class="tickets-sort-indicator">{% if orden_actual == 'tienda' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a></th>
+                        <th><a class="tickets-sort-button {% if orden_actual == 'categoria' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=categoria&amp;direccion={% if orden_actual == 'categoria' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Categoría <span class="tickets-sort-indicator">{% if orden_actual == 'categoria' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a></th>
+                        <th><a class="tickets-sort-button {% if orden_actual == 'tipo' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=tipo&amp;direccion={% if orden_actual == 'tipo' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Tipo <span class="tickets-sort-indicator">{% if orden_actual == 'tipo' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a></th>
+                        <th><a class="tickets-sort-button {% if orden_actual == 'estado' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=estado&amp;direccion={% if orden_actual == 'estado' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Estado <span class="tickets-sort-indicator">{% if orden_actual == 'estado' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a></th>
+                        <th><a class="tickets-sort-button {% if orden_actual == 'prioridad' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=prioridad&amp;direccion={% if orden_actual == 'prioridad' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Prioridad <span class="tickets-sort-indicator">{% if orden_actual == 'prioridad' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a></th>
+                        <th><a class="tickets-sort-button {% if orden_actual == 'responsable' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=responsable&amp;direccion={% if orden_actual == 'responsable' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Responsable <span class="tickets-sort-indicator">{% if orden_actual == 'responsable' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a></th>
+                        <th><a class="tickets-sort-button {% if orden_actual == 'sla' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=sla&amp;direccion={% if orden_actual == 'sla' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">SLA <span class="tickets-sort-indicator">{% if orden_actual == 'sla' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in pagina %}
+                        <tr>
+                            <td><div class="ticket-id"><a href="{% url 'tickets:detalle' ticket.folio %}">{{ ticket.ticket_bradescard|default:ticket.folio }}</a><span>Ticket {{ ticket.get_origen_display }} · Folio interno</span></div></td>
+                            <td><div class="ticket-store"><strong>{{ ticket.tienda|default:"Sin tienda" }}</strong><span>{% if ticket.incidencia_especifica %}{{ ticket.incidencia_especifica }}{% elif ticket.incidencia_general %}{{ ticket.incidencia_general }}{% else %}Sin descripción{% endif %}</span></div></td>
+                            <td><div class="ticket-category" title="{{ ticket.categoria }}">{{ ticket.categoria|default:"—" }}</div></td>
+                            <td>{{ ticket.tipo_externo|default:"—" }}</td>
+                            <td><span class="ticket-badge {{ ticket.estado_interno|lower }}">{{ ticket.get_estado_interno_display }}</span></td>
+                            <td>{% if ticket.prioridad %}<span class="ticket-priority {{ ticket.prioridad|lower }}">{{ ticket.get_prioridad_display }}</span>{% else %}<span class="ticket-owner-empty">—</span>{% endif %}</td>
+                            <td>{% if ticket.responsable %}<div class="ticket-owner"><span class="ticket-owner-avatar">{% if ticket.responsable.first_name %}{{ ticket.responsable.first_name|slice:":1" }}{% else %}{{ ticket.responsable.username|slice:":1" }}{% endif %}</span><span class="ticket-owner-name">{{ ticket.responsable.get_full_name|default:ticket.responsable.username }}</span></div>{% else %}<span class="ticket-owner-empty">Sin asignar</span>{% endif %}</td>
+                            <td>{% if ticket.sla_vencido_actual %}<span class="ticket-sla exceeded"><span class="ticket-sla-dot"></span>Excedido</span>{% else %}<span class="ticket-sla"><span class="ticket-sla-dot"></span>En tiempo</span>{% endif %}</td>
+                            <td><a href="{% url 'tickets:detalle' ticket.folio %}" class="ticket-open" aria-label="Abrir ticket {{ ticket.ticket_bradescard|default:ticket.folio }}"><svg viewBox="0 0 24 24" fill="none"><path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg></a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tickets-pagination">
+            <div class="pagination-info">Página <strong>{{ pagina.number }}</strong> de <strong>{{ pagina.paginator.num_pages }}</strong> · {{ pagina.paginator.count }} resultado{{ pagina.paginator.count|pluralize }}</div>
+            <div class="pagination-actions">
+                <form method="get" class="pagination-jump">
+                    {% for nombre, valor in request.GET.items %}{% if nombre != "page" %}<input type="hidden" name="{{ nombre }}" value="{{ valor }}">{% endif %}{% endfor %}
+                    <label for="ticket-page">Ir a página</label>
+                    <select id="ticket-page" name="page" onchange="this.form.submit()">
+                        {% for numero_pagina in pagina.paginator.page_range %}<option value="{{ numero_pagina }}" {% if numero_pagina == pagina.number %}selected{% endif %}>{{ numero_pagina }}</option>{% endfor %}
+                    </select>
+                    <noscript><button type="submit" class="pagination-button">Ir</button></noscript>
+                </form>
+                {% if pagina.has_previous %}<a class="pagination-button" href="?{% if parametros_paginacion %}{{ parametros_paginacion }}&amp;{% endif %}page={{ pagina.previous_page_number }}">← Anterior</a>{% endif %}
+                <span class="pagination-current">{{ pagina.number }}</span>
+                {% if pagina.has_next %}<a class="pagination-button" href="?{% if parametros_paginacion %}{{ parametros_paginacion }}&amp;{% endif %}page={{ pagina.next_page_number }}">Siguiente →</a>{% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="tickets-empty">
+            <div class="tickets-empty-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.7" /><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" /></svg></div>
+            <strong>No encontramos tickets</strong>
+            <span>Prueba cambiando la búsqueda o los filtros seleccionados.</span>
+        </div>
+    {% endif %}
+</section>

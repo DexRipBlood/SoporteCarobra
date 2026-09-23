@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static tickets_tiempos %}
+{% block title %}Reportería SLA · CAROBRA{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/sla-report.css' %}">{% endblock %}
+{% block content %}
+<section class="sla-report-page">
+    <header class="sla-report-hero">
+        <div><span class="sla-report-kicker">Control operativo</span><h2>Reportería de SLA</h2><p>Consulta la atención por tienda, identifica desviaciones y exporta un concentrado auditable.</p></div>
+        <button class="sla-export-button" form="sla-report-form" name="exportar" value="xlsx" type="submit"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Exportar Excel</button>
+    </header>
+    <form id="sla-report-form" class="sla-report-filters" method="get">
+        <div class="sla-filter-heading"><div><strong>Filtros del reporte</strong><span>El archivo exportado conserva exactamente esta selección.</span></div><button class="sla-query-button" type="submit">Actualizar resultados</button></div>
+        <div class="sla-filter-grid">{% for field in form %}<div class="sla-filter-field {% if field.errors %}has-error{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<small>{{ field.errors|striptags }}</small>{% endif %}</div>{% endfor %}</div>
+    </form>
+    <div class="sla-kpi-grid" aria-label="Resumen del periodo">
+        <article class="sla-kpi-card"><span>Tickets analizados</span><strong>{{ resumen.tickets }}</strong><small>{{ total_filas }} registro{{ total_filas|pluralize }}</small></article>
+        <article class="sla-kpi-card is-success"><span>En objetivo</span><strong>{{ resumen.en_objetivo }}</strong><small>{{ resumen.cumplimiento }}% de cumplimiento</small></article>
+        <article class="sla-kpi-card {% if resumen.excedidos %}is-danger{% endif %}"><span>SLA excedidos</span><strong>{{ resumen.excedidos }}</strong><small>Requieren revisión</small></article>
+        <article class="sla-kpi-card"><span>Tickets cerrados</span><strong>{{ resumen.cerrados }}</strong><small>Dentro del conjunto</small></article>
+    </div>
+    <section class="sla-report-table-card">
+        <header><div><h3>Detalle de incidencias</h3><p>{{ total_filas }} resultado{{ total_filas|pluralize }} en el periodo seleccionado</p></div><span class="sla-table-hint">Desliza horizontalmente para consultar todas las columnas</span></header>
+        {% if filas %}
+        <div class="sla-report-table-wrap" tabindex="0" role="region" aria-label="Resultados del reporte SLA"><table><thead><tr><th>Tienda</th><th>Coordinador / distrital</th><th>Periodo</th><th>Duración</th><th>Folio</th><th>Afectación</th><th>Descripción</th><th>Estatus</th><th>Dependencia</th><th>Atención / pausa</th></tr></thead><tbody>
+        {% for fila in filas %}<tr><td><strong class="sla-store-name">{{ fila.tienda }}</strong></td><td>{{ fila.coordinador }}<small>{{ fila.distrital }}</small></td><td>{{ fila.inicio|date:"d/m/Y H:i" }}<small>{% if fila.fin %}{{ fila.fin|date:"d/m/Y H:i" }}{% else %}<span class="sla-open-label">Continúa abierto</span>{% endif %}</small></td><td>{{ fila.total|tiempo }}<small>{{ fila.dias_calendario }} día{{ fila.dias_calendario|pluralize }} calendario</small></td><td><a class="sla-ticket-link" href="{% url 'tickets:detalle' fila.ticket.folio %}">{{ fila.folios }} <span>↗</span></a></td><td>{{ fila.afectacion }}</td><td class="sla-description">{{ fila.descripcion }}</td><td><span class="sla-status-pill">{{ fila.estatus }}</span></td><td>{{ fila.dependencia }}</td><td><strong>{{ fila.efectivo|tiempo }}</strong><small>Pausa: {{ fila.pausa|tiempo }}</small></td></tr>{% endfor %}
+        </tbody></table></div>
+        {% else %}<div class="sla-report-empty"><span aria-hidden="true">⌁</span><strong>Sin incidencias en este periodo</strong><p>Ajusta las fechas o retira algún filtro para ampliar la consulta.</p></div>{% endif %}
+    </section>
+</section>
+{% endblock %}

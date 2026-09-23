@@ -1,0 +1,31 @@
+{% extends "usuarios/emails/base.html" %}
+
+{% block email_title %}Tu acceso a CAROBRA Tickets{% endblock %}
+{% block preheader %}Tu cuenta está lista. Define tu contraseña para ingresar a CAROBRA Tickets.{% endblock %}
+
+{% block email_content %}
+    <div style="display:inline-block;padding:6px 9px;border-radius:7px;background:#edf2ff;color:#315ee4;font-size:9px;font-weight:800;letter-spacing:1px;line-height:13px;">NUEVA CUENTA</div>
+    <h1 class="email-title" style="margin:16px 0 0;color:#172033;font-size:34px;line-height:40px;font-weight:750;letter-spacing:-1px;">Tu acceso está listo</h1>
+    <p style="margin:15px 0 0;color:#59677c;font-size:14px;line-height:23px;">Hola <strong style="color:#172033;">{{ usuario_invitado.get_full_name|default:usuario_invitado.username }}</strong>, tu cuenta fue habilitada para operar dentro del sistema de tickets CAROBRA.</p>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:25px;border:1px solid #e1e7f0;border-radius:12px;background:#f7f9fc;">
+        <tr>
+            <td style="padding:15px 17px;color:#78869a;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;">Usuario asignado</td>
+            <td align="right" style="padding:15px 17px;color:#172033;font-size:13px;font-weight:800;">{{ usuario_invitado.username }}</td>
+        </tr>
+    </table>
+
+    <p style="margin:25px 0 0;color:#59677c;font-size:13px;line-height:21px;">Para proteger tu cuenta, define una contraseña personal mediante el siguiente acceso seguro:</p>
+    <div style="margin:25px 0 0;">
+        <a class="email-button" href="{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}" style="display:inline-block;padding:14px 22px;border-radius:10px;background:#416ff1;background-image:linear-gradient(135deg,#5b84ff,#315ee4);color:#ffffff;font-size:13px;font-weight:800;line-height:18px;text-decoration:none;box-shadow:0 9px 24px rgba(49,94,228,.25);">Establecer mi contraseña&nbsp;&nbsp;→</a>
+    </div>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:28px;border-left:3px solid #4f7cff;background:#f2f5fb;">
+        <tr>
+            <td style="padding:14px 16px;color:#59677c;font-size:11px;line-height:18px;"><strong style="display:block;margin-bottom:3px;color:#2b3a50;font-size:11px;">Protección del enlace</strong>Es personal, solo funciona una vez y vence en 24 horas. No lo compartas con otras personas.</td>
+        </tr>
+    </table>
+
+    <p style="margin:25px 0 0;color:#8a96a7;font-size:10px;line-height:17px;">Si el botón no funciona, copia y pega esta dirección en tu navegador:</p>
+    <p style="margin:6px 0 0;word-break:break-all;color:#416ff1;font-size:10px;line-height:17px;">{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}</p>
+{% endblock %}

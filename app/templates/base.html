@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#101722">
+
+    <link
+        rel="icon"
+        href="{% static 'icons/favicon.svg' %}"
+        type="image/svg+xml"
+    >
+
+    <!-- Aplica el tema guardado antes del primer render para evitar destellos. -->
+    <script>
+        (() => {
+            let initialTheme = "dark";
+
+            try {
+                const savedTheme = localStorage.getItem("carobra_theme");
+
+                if (savedTheme === "light" || savedTheme === "dark") {
+                    initialTheme = savedTheme;
+                } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+                    initialTheme = "light";
+                }
+            } catch (error) {
+                initialTheme = "dark";
+            }
+
+            document.documentElement.setAttribute("data-theme", initialTheme);
+        })();
+    </script>
+
+    <title>
+        {% block title %}CAROBRA Tickets{% endblock %}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/app.css' %}"
+    >
+
+    {% block extra_css %}{% endblock %}
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/system.css' %}"
+    >
+</head>
+
+<body>
+
+    <!-- =====================================================
+         CONTENEDOR GENERAL DE LA APP
+    ====================================================== -->
+    <div
+        id="app"
+        class="app-shell"
+        data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+    >
+
+        {% if request.user.is_authenticated %}
+
+            <!-- Fondo móvil cuando se abre el menú -->
+            <div
+                id="sidebarBackdrop"
+                class="sidebar-backdrop"
+                aria-hidden="true"
+            ></div>
+
+
+            <!-- =============================================
+                 SIDEBAR
+            ============================================== -->
+            {% include "components/sidebar.html" %}
+
+
+            <!-- =============================================
+                 ZONA PRINCIPAL
+            ============================================== -->
+            <div class="app-main">
+
+                <!-- TOPBAR -->
+                {% include "components/topbar.html" %}
+
+
+                <!-- =========================================
+                     CONTENIDO DE CADA PÁGINA
+                ========================================== -->
+                <main
+                    id="mainContent"
+                    class="app-content"
+                    tabindex="-1"
+                >
+
+                    {% include "components/messages.html" %}
+
+                    <div class="page-transition">
+
+                        {% block content %}
+                        {% endblock %}
+
+                    </div>
+
+                </main>
+
+            </div>
+
+        {% else %}
+
+            <!-- =============================================
+                 PÁGINAS SIN SESIÓN
+                 Login / recuperación / etc.
+            ============================================== -->
+            <main class="auth-layout">
+
+                {% include "components/messages.html" %}
+
+                {% block auth_content %}
+                {% endblock %}
+
+            </main>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         CONTENEDOR GLOBAL PARA TOASTS
+    ====================================================== -->
+    <div
+        id="toastContainer"
+        class="toast-container"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
+
+
+    <!-- =====================================================
+         CONTENEDOR GLOBAL PARA DRAWERS / MODALES
+    ====================================================== -->
+    <div
+        id="overlayRoot"
+        class="overlay-root"
+    ></div>
+
+
+    <!-- =====================================================
+         JAVASCRIPT PRINCIPAL
+    ====================================================== -->
+    <script
+        src="{% static 'js/app.js' %}"
+        defer
+    ></script>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

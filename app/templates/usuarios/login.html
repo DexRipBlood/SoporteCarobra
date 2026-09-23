@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+
+{% block title %}Acceso seguro · CAROBRA Operations{% endblock %}
+
+{% block auth_content %}
+<div class="auth-shell">
+    <section class="auth-brand-panel" aria-label="CAROBRA Operations">
+        <div class="auth-motion-scene" aria-hidden="true">
+            <span class="auth-aurora auth-aurora-one"></span>
+            <span class="auth-aurora auth-aurora-two"></span>
+            <svg class="auth-network" viewBox="0 0 800 800" fill="none">
+                <path class="auth-network-path path-one" d="M56 586C202 478 255 276 414 262c143-13 177 116 330 64"/>
+                <path class="auth-network-path path-two" d="M106 700c113-95 236-70 330-180 92-107 94-282 257-396"/>
+                <path class="auth-network-path path-three" d="M-12 316c175 28 246 112 386 84 151-30 196-164 368-174"/>
+                <g class="auth-network-nodes">
+                    <circle cx="106" cy="700" r="5"/><circle cx="374" cy="400" r="5"/>
+                    <circle cx="414" cy="262" r="5"/><circle cx="693" cy="124" r="5"/>
+                    <circle cx="744" cy="326" r="5"/><circle cx="56" cy="586" r="5"/>
+                </g>
+            </svg>
+        </div>
+
+        <a href="/" class="auth-brand">
+            <span class="auth-brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7 3.5h10A3.5 3.5 0 0 1 20.5 7v10a3.5 3.5 0 0 1-3.5 3.5H7A3.5 3.5 0 0 1 3.5 17V7A3.5 3.5 0 0 1 7 3.5Z" stroke="currentColor" stroke-width="1.7"/>
+                    <path d="M8 8.5h8M8 12h5M8 15.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <span><strong>CAROBRA</strong><span>Operations Center</span></span>
+        </a>
+
+        <div class="auth-story">
+            <div class="auth-kicker">Operación centralizada</div>
+            <h1>Decisiones claras para cada incidencia.</h1>
+            <p>
+                Supervisa tickets, responsables, prioridades y acuerdos de
+                servicio desde un espacio operativo seguro y consistente.
+            </p>
+            <div class="auth-capabilities" aria-label="Capacidades del sistema">
+                <span class="auth-capability">Gestión de tickets</span>
+                <span class="auth-capability">Trazabilidad completa</span>
+                <span class="auth-capability">Control de SLA</span>
+                <span class="auth-capability">Importación segura</span>
+            </div>
+        </div>
+
+        <div class="auth-brand-footer">
+            Plataforma interna · Acceso exclusivo para personal autorizado
+        </div>
+    </section>
+
+    <section class="auth-form-panel">
+        <button id="loginThemeToggle" class="auth-theme-toggle theme-button" type="button" aria-label="Cambiar tema" aria-pressed="false" title="Cambiar tema">
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none"><path d="M20 15.3A8 8 0 0 1 8.7 4 8.5 8.5 0 1 0 20 15.3Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+
+        <div class="auth-form-wrap">
+            <div class="auth-form-eyebrow">Acceso corporativo</div>
+            <h2>Bienvenido de nuevo</h2>
+            <p class="auth-form-intro">
+                Ingresa tus credenciales para continuar al centro de operaciones.
+            </p>
+
+            {% if form.errors %}
+                <div class="auth-error" role="alert">
+                    No pudimos validar tus credenciales. Revisa el usuario y la contraseña.
+                </div>
+            {% endif %}
+
+            {% if google_oauth_enabled %}
+                <form method="post" action="{% provider_login_url 'google' %}" class="auth-google-form">
+                    {% csrf_token %}
+                    <button class="auth-google" type="submit">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.3c1.9-1.8 2.9-4.4 2.9-7.4Z"/>
+                            <path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.5c-.9.6-2.1 1-3.4 1a5.9 5.9 0 0 1-5.5-4.1H3.1v2.6A10 10 0 0 0 12 22Z"/>
+                            <path fill="#FBBC05" d="M6.5 14a6 6 0 0 1 0-3.9V7.5H3.1a10 10 0 0 0 0 9.1L6.5 14Z"/>
+                            <path fill="#EA4335" d="M12 6a5.4 5.4 0 0 1 3.8 1.5l2.9-2.8A9.7 9.7 0 0 0 12 2a10 10 0 0 0-8.9 5.5l3.4 2.6A5.9 5.9 0 0 1 12 6Z"/>
+                        </svg>
+                        Continuar con Google
+                    </button>
+                </form>
+
+                <div class="auth-divider"><span>o usa tus credenciales</span></div>
+            {% endif %}
+
+            <form method="post" id="loginForm" novalidate>
+                {% csrf_token %}
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+                <div class="auth-field">
+                    <label for="id_username">Usuario</label>
+                    <div class="auth-input-wrap">
+                        <svg class="auth-input-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M5 20c.8-4.5 3.1-7 7-7s6.2 2.5 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                        <input class="auth-input" type="text" name="username" id="id_username" value="{{ form.username.value|default:'' }}" autocomplete="username" autofocus required placeholder="Tu usuario corporativo">
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label for="id_password">Contraseña</label>
+                    <div class="auth-input-wrap">
+                        <svg class="auth-input-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10" stroke="currentColor" stroke-width="1.7"/>
+                        </svg>
+                        <input class="auth-input" type="password" name="password" id="id_password" autocomplete="current-password" required placeholder="Tu contraseña">
+                        <button class="auth-password-toggle" id="passwordToggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M3.5 12s3-5 8.5-5 8.5 5 8.5 5-3 5-8.5 5-8.5-5-8.5-5Z" stroke="currentColor" stroke-width="1.7"/>
+                                <circle cx="12" cy="12" r="2.2" stroke="currentColor" stroke-width="1.7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="auth-submit" id="loginButton" type="submit">Iniciar sesión</button>
+                {% if email_enabled %}
+                    <a class="auth-forgot" href="{% url 'password_reset' %}">¿Olvidaste tu contraseña?</a>
+                {% endif %}
+            </form>
+
+            <div class="auth-form-footer">
+                <span class="auth-secure">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 3 5 6v5c0 4.5 2.7 7.8 7 10 4.3-2.2 7-5.5 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.7"/>
+                        <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Sesión protegida
+                </span>
+                <span>CAROBRA · 2026</span>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const form = document.getElementById("loginForm");
+    const button = document.getElementById("loginButton");
+    const toggle = document.getElementById("passwordToggle");
+    const password = document.getElementById("id_password");
+
+    toggle?.addEventListener("click", () => {
+        const visible = password.type === "text";
+        password.type = visible ? "password" : "text";
+        toggle.setAttribute("aria-pressed", visible ? "false" : "true");
+        toggle.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+    });
+
+    let leaving = false;
+
+    form?.addEventListener("submit", (event) => {
+        if (leaving) return;
+
+        event.preventDefault();
+        leaving = true;
+        button.disabled = true;
+        button.classList.add("is-loading");
+        button.textContent = "Validando acceso…";
+        sessionStorage.setItem("carobra_auth_transition", "enter-app");
+        document.documentElement.classList.add("auth-login-leave");
+
+        window.setTimeout(() => form.submit(), 500);
+    });
+})();
+</script>
+{% endblock %}

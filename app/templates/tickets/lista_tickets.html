@@ -1,0 +1,2102 @@
+{% extends "base.html" %}
+
+{% block title %}
+Tickets · CAROBRA
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+
+    /* =====================================================
+       TICKETS · LISTADO
+    ====================================================== */
+
+    .tickets-page {
+        max-width: 1680px;
+        margin: 0 auto;
+    }
+
+    .tickets-view-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0 0 18px;
+    }
+
+    .tickets-view-tabs a {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+    }
+
+    .tickets-view-tabs a:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .tickets-view-tabs a.is-active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+    }
+
+    .tickets-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+
+        gap: 20px;
+
+        margin-bottom: 18px;
+    }
+
+    .tickets-heading-copy h2 {
+        margin: 0;
+
+        font-size: clamp(24px, 3vw, 34px);
+        font-weight: 790;
+
+        letter-spacing: -.045em;
+    }
+
+    .tickets-heading-copy p {
+        margin: 7px 0 0;
+
+        color: var(--muted);
+
+        font-size: 12px;
+    }
+
+    .tickets-heading-count {
+        flex: 0 0 auto;
+
+        padding: 8px 11px;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: var(--surface);
+
+        color: var(--muted);
+
+        font-size: 10px;
+    }
+
+    .tickets-heading-count strong {
+        color: var(--text);
+    }
+
+    .tickets-heading-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .tickets-create-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 38px;
+        padding: 0 14px;
+        border-radius: 12px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 720;
+        text-decoration: none;
+        box-shadow: 0 8px 22px rgba(49, 94, 228, .2);
+    }
+
+    .tickets-create-button svg {
+        width: 15px;
+        height: 15px;
+    }
+
+
+    /* =====================================================
+       STATS
+    ====================================================== */
+
+    .ticket-stats {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 11px;
+
+        margin-bottom: 16px;
+    }
+
+    .ticket-stat {
+        position: relative;
+
+        min-height: 88px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 13px;
+
+        padding: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 17px;
+
+        background: var(--surface);
+
+        overflow: hidden;
+
+        transition:
+            transform 140ms ease,
+            border-color 140ms ease,
+            background 140ms ease,
+            box-shadow 140ms ease;
+    }
+
+    .ticket-stat:hover {
+        transform: translateY(-2px);
+
+        border-color: var(--border-strong);
+
+        box-shadow: var(--shadow-sm);
+    }
+
+    .ticket-stat-icon {
+        flex: 0 0 39px;
+
+        width: 39px;
+        height: 39px;
+
+        display: grid;
+        place-items: center;
+
+        border-radius: 12px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+    }
+
+    .ticket-stat-icon svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    .ticket-stat-copy {
+        min-width: 0;
+    }
+
+    .ticket-stat-copy span {
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 9px;
+        font-weight: 650;
+    }
+
+    .ticket-stat-copy strong {
+        display: block;
+
+        margin-top: 3px;
+
+        font-size: 20px;
+        font-weight: 780;
+
+        letter-spacing: -.03em;
+    }
+
+    .ticket-stat.warning .ticket-stat-icon {
+        background: var(--warning-soft);
+        color: var(--warning);
+    }
+
+    .ticket-stat.danger .ticket-stat-icon {
+        background: var(--danger-soft);
+        color: var(--danger);
+    }
+
+
+    /* =====================================================
+       TOOLBAR
+    ====================================================== */
+
+    .tickets-toolbar {
+        position: relative;
+
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+        align-items: end;
+
+        gap: 10px;
+
+        padding: 12px;
+
+        border: 1px solid var(--border);
+        border-radius: 18px;
+
+        background: var(--surface);
+
+        box-shadow: var(--shadow-sm);
+    }
+
+    .tickets-search {
+        position: relative;
+
+        grid-column: span 2;
+        min-width: 0;
+    }
+
+    .tickets-search svg {
+        position: absolute;
+        left: 13px;
+        top: 50%;
+
+        width: 17px;
+        height: 17px;
+
+        color: var(--muted);
+
+        transform: translateY(-50%);
+
+        pointer-events: none;
+    }
+
+    .tickets-input,
+    .tickets-select {
+        width: 100%;
+        height: 42px;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: var(--surface-2);
+
+        color: var(--text);
+
+        outline: none;
+
+        transition:
+            border-color 130ms ease,
+            background 130ms ease,
+            box-shadow 130ms ease;
+    }
+
+    .tickets-input {
+        padding: 0 13px 0 40px;
+    }
+
+    .tickets-input::placeholder {
+        color: var(--muted);
+    }
+
+    .tickets-select {
+        min-width: 0;
+
+        padding: 0 32px 0 11px;
+
+        cursor: pointer;
+    }
+
+    .tickets-input:focus,
+    .tickets-select:focus {
+        border-color: rgba(59, 110, 245, .55);
+
+        box-shadow:
+            0 0 0 3px rgba(59, 110, 245, .11);
+    }
+
+    .tickets-date-filter {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        grid-column: span 2;
+        min-width: 0;
+    }
+
+    .tickets-date-filter-label {
+        grid-column: 1 / -1;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 750;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+    }
+
+    .tickets-date-filter .tickets-select {
+        min-width: 0;
+    }
+
+    .tickets-filter-button,
+    .tickets-clear {
+        width: 100%;
+        min-height: 42px;
+    }
+
+    .tickets-filter-button {
+        height: 42px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 7px;
+
+        padding: 0 15px;
+
+        border: 0;
+        border-radius: 12px;
+
+        background: var(--primary);
+
+        color: #fff;
+
+        font-size: 10px;
+        font-weight: 750;
+
+        cursor: pointer;
+
+        transition:
+            background 120ms ease,
+            transform 120ms ease;
+    }
+
+    .tickets-filter-button:hover {
+        background: var(--primary-hover);
+    }
+
+    .tickets-filter-button:active {
+        transform: scale(.97);
+    }
+
+    .tickets-filter-button svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .tickets-clear {
+        height: 42px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 0 13px;
+
+        border: 1px solid var(--border);
+        border-radius: 12px;
+
+        background: transparent;
+
+        color: var(--muted);
+
+        font-size: 10px;
+        font-weight: 650;
+
+        transition:
+            color 120ms ease,
+            background 120ms ease;
+    }
+
+    .tickets-clear:hover {
+        color: var(--text);
+        background: var(--hover);
+    }
+
+
+    /* =====================================================
+       TABLE PANEL
+    ====================================================== */
+
+    .tickets-panel {
+        margin-top: 14px;
+
+        border: 1px solid var(--border);
+        border-radius: 20px;
+
+        background: var(--surface);
+
+        box-shadow: var(--shadow-sm);
+
+        overflow: hidden;
+    }
+
+    .tickets-panel-head {
+        min-height: 55px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 14px;
+
+        padding: 12px 17px;
+
+        border-bottom: 1px solid var(--border);
+    }
+
+    .tickets-panel-head strong {
+        font-size: 11px;
+    }
+
+    .tickets-panel-head span {
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+    .tickets-table-wrap {
+        width: 100%;
+
+        overflow-x: auto;
+    }
+
+    .tickets-table {
+        width: 100%;
+        min-width: 1060px;
+
+        border-collapse: collapse;
+    }
+
+    .tickets-table th {
+        height: 42px;
+
+        padding: 0 13px;
+
+        border-bottom: 1px solid var(--border);
+
+        background: var(--surface-2);
+
+        color: var(--muted);
+
+        font-size: 8px;
+        font-weight: 780;
+
+        letter-spacing: .055em;
+        text-align: left;
+        text-transform: uppercase;
+
+        white-space: nowrap;
+    }
+
+    .tickets-table td {
+        padding: 12px 13px;
+
+        border-bottom: 1px solid var(--border);
+
+        color: var(--text-soft);
+
+        font-size: 10px;
+
+        vertical-align: middle;
+    }
+
+    .tickets-table tbody tr {
+        position: relative;
+
+        transition:
+            background 100ms ease;
+    }
+
+    .tickets-table tbody tr:hover {
+        background: var(--hover);
+    }
+
+    .tickets-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+
+    /* =====================================================
+       TICKET ID
+    ====================================================== */
+
+    .ticket-id {
+        display: flex;
+        flex-direction: column;
+
+        gap: 4px;
+    }
+
+    .ticket-id a {
+        color: var(--text);
+
+        font-size: 10px;
+        font-weight: 780;
+
+        transition:
+            color 100ms ease;
+    }
+
+    .ticket-id a:hover {
+        color: var(--primary);
+    }
+
+    .ticket-id span {
+        color: var(--muted);
+
+        font-size: 8px;
+    }
+
+
+    /* =====================================================
+       STORE / ISSUE
+    ====================================================== */
+
+    .ticket-store {
+        max-width: 190px;
+    }
+
+    .ticket-store strong {
+        display: block;
+
+        overflow: hidden;
+
+        color: var(--text-soft);
+
+        font-size: 10px;
+        font-weight: 650;
+
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .ticket-store span {
+        display: block;
+
+        max-width: 185px;
+
+        margin-top: 3px;
+
+        overflow: hidden;
+
+        color: var(--muted);
+
+        font-size: 8px;
+
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .ticket-category {
+        max-width: 160px;
+
+        overflow: hidden;
+
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+
+    /* =====================================================
+       BADGES
+    ====================================================== */
+
+    .ticket-badge {
+        display: inline-flex;
+        align-items: center;
+
+        gap: 5px;
+
+        min-height: 25px;
+
+        padding: 4px 8px;
+
+        border-radius: 999px;
+
+        background: var(--surface-3);
+
+        color: var(--text-soft);
+
+        font-size: 8px;
+        font-weight: 750;
+
+        white-space: nowrap;
+    }
+
+    .ticket-badge::before {
+        content: "";
+
+        width: 6px;
+        height: 6px;
+
+        border-radius: 50%;
+
+        background: currentColor;
+
+        opacity: .7;
+    }
+
+    .ticket-badge.nuevo {
+        background: rgba(63, 140, 255, .11);
+        color: #5797ff;
+    }
+
+    .ticket-badge.asignado {
+        background: rgba(117, 96, 255, .11);
+        color: #806cff;
+    }
+
+    .ticket-badge.en_proceso {
+        background: var(--primary-soft);
+        color: var(--primary);
+    }
+
+    .ticket-badge.en_espera {
+        background: var(--warning-soft);
+        color: var(--warning);
+    }
+
+    .ticket-badge.resuelto {
+        background: var(--success-soft);
+        color: var(--success);
+    }
+
+    .ticket-badge.cerrado {
+        color: var(--muted);
+    }
+
+
+    /* =====================================================
+       PRIORIDAD
+    ====================================================== */
+
+    .ticket-priority {
+        display: inline-flex;
+        align-items: center;
+
+        gap: 6px;
+
+        font-size: 8px;
+        font-weight: 750;
+
+        white-space: nowrap;
+    }
+
+    .ticket-priority::before {
+        content: "";
+
+        width: 7px;
+        height: 7px;
+
+        border-radius: 50%;
+
+        background: var(--muted);
+    }
+
+    .ticket-priority.alta::before {
+        background: var(--warning);
+    }
+
+    .ticket-priority.critica::before {
+        background: var(--danger);
+    }
+
+    .ticket-priority.media::before {
+        background: var(--primary);
+    }
+
+    .ticket-priority.baja::before {
+        background: var(--success);
+    }
+
+
+    /* =====================================================
+       RESPONSABLE
+    ====================================================== */
+
+    .ticket-owner {
+        display: flex;
+        align-items: center;
+
+        gap: 7px;
+    }
+
+    .ticket-owner-avatar {
+        flex: 0 0 27px;
+
+        width: 27px;
+        height: 27px;
+
+        display: grid;
+        place-items: center;
+
+        border-radius: 9px;
+
+        background: var(--primary-soft);
+
+        color: var(--primary);
+
+        font-size: 8px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .ticket-owner-name {
+        max-width: 130px;
+
+        overflow: hidden;
+
+        font-size: 9px;
+
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .ticket-owner-empty {
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+
+    /* =====================================================
+       SLA
+    ====================================================== */
+
+    .ticket-sla {
+        display: inline-flex;
+        align-items: center;
+
+        gap: 6px;
+
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+    .ticket-sla-dot {
+        width: 7px;
+        height: 7px;
+
+        border-radius: 50%;
+
+        background: var(--success);
+    }
+
+    .ticket-sla.exceeded {
+        color: var(--danger);
+    }
+
+    .ticket-sla.exceeded .ticket-sla-dot {
+        background: var(--danger);
+
+        box-shadow:
+            0 0 0 4px var(--danger-soft);
+    }
+
+
+    /* =====================================================
+       OPEN
+    ====================================================== */
+
+    .ticket-open {
+        width: 31px;
+        height: 31px;
+
+        display: grid;
+        place-items: center;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        color: var(--muted);
+
+        transition:
+            color 110ms ease,
+            background 110ms ease,
+            border-color 110ms ease,
+            transform 110ms ease;
+    }
+
+    .ticket-open:hover {
+        color: var(--primary);
+
+        background: var(--primary-soft);
+
+        border-color: rgba(59, 110, 245, .18);
+
+        transform: translateX(2px);
+    }
+
+    .ticket-open svg {
+        width: 15px;
+        height: 15px;
+    }
+
+
+    /* =====================================================
+       EMPTY
+    ====================================================== */
+
+    .tickets-empty {
+        padding: 65px 20px;
+
+        text-align: center;
+    }
+
+    .tickets-empty-icon {
+        width: 48px;
+        height: 48px;
+
+        display: grid;
+        place-items: center;
+
+        margin: 0 auto 12px;
+
+        border-radius: 15px;
+
+        background: var(--surface-2);
+
+        color: var(--muted);
+    }
+
+    .tickets-empty-icon svg {
+        width: 23px;
+        height: 23px;
+    }
+
+    .tickets-empty strong {
+        display: block;
+
+        font-size: 12px;
+    }
+
+    .tickets-empty span {
+        display: block;
+
+        margin-top: 5px;
+
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+
+    /* =====================================================
+       PAGINATION
+    ====================================================== */
+
+    .tickets-pagination {
+        min-height: 61px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 15px;
+
+        padding: 12px 16px;
+
+        border-top: 1px solid var(--border);
+    }
+
+    .pagination-info {
+        color: var(--muted);
+
+        font-size: 9px;
+    }
+
+    .pagination-info strong {
+        color: var(--text-soft);
+    }
+
+    .pagination-actions {
+        display: flex;
+        align-items: center;
+
+        gap: 6px;
+    }
+
+    .pagination-jump {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .pagination-jump label {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 650;
+    }
+
+    .pagination-jump select {
+        height: 34px;
+        min-width: 92px;
+        padding: 0 26px 0 9px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface-2);
+        color: var(--text-soft);
+        font-size: 9px;
+        font-weight: 650;
+        cursor: pointer;
+    }
+
+    .tickets-sort-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-decoration: none;
+    }
+
+    .tickets-sort-button:hover,
+    .tickets-sort-button:focus-visible,
+    .tickets-sort-button.is-active {
+        color: var(--primary);
+    }
+
+    .tickets-sort-indicator {
+        width: 11px;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1;
+    }
+
+    .tickets-panel.is-loading {
+        opacity: .58;
+        pointer-events: none;
+    }
+
+    .pagination-button {
+        min-width: 34px;
+        height: 34px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 0 10px;
+
+        border: 1px solid var(--border);
+        border-radius: 10px;
+
+        color: var(--text-soft);
+
+        font-size: 9px;
+        font-weight: 650;
+
+        transition:
+            background 110ms ease,
+            border-color 110ms ease,
+            color 110ms ease;
+    }
+
+    .pagination-button:hover {
+        background: var(--hover);
+        border-color: var(--border-strong);
+    }
+
+    .pagination-current {
+        min-width: 34px;
+        height: 34px;
+
+        display: grid;
+        place-items: center;
+
+        padding: 0 9px;
+
+        border-radius: 10px;
+
+        background: var(--primary);
+
+        color: #fff;
+
+        font-size: 9px;
+        font-weight: 750;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media (max-width: 1250px) {
+
+        .ticket-stats {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+        .tickets-toolbar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .tickets-heading {
+            align-items: flex-start;
+            flex-direction: column;
+
+            gap: 10px;
+        }
+
+        .ticket-stats {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
+            gap: 8px;
+        }
+
+        .ticket-stat {
+            min-height: 78px;
+
+            padding: 11px;
+        }
+
+        .ticket-stat-icon {
+            width: 34px;
+            height: 34px;
+
+            flex-basis: 34px;
+        }
+
+        .ticket-stat-copy strong {
+            font-size: 17px;
+        }
+
+        .tickets-toolbar {
+            padding: 9px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .tickets-search {
+            grid-column: 1 / -1;
+        }
+
+        .tickets-date-filter {
+            grid-column: 1 / -1;
+        }
+
+        .tickets-panel {
+            border-radius: 16px;
+        }
+
+        .tickets-pagination {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .pagination-actions {
+            width: 100%;
+
+            justify-content: space-between;
+        }
+
+        .pagination-jump {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .pagination-jump select {
+            flex: 1;
+        }
+
+    }
+
+
+    @media (max-width: 430px) {
+
+        .ticket-stats {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .tickets-toolbar { grid-template-columns: 1fr; }
+        .tickets-search, .tickets-date-filter { grid-column: 1; }
+
+    }
+
+    /* =====================================================
+   AJUSTE DE ESCALA · TABLA TICKETS
+===================================================== */
+
+.tickets-table {
+    min-width: 1280px;
+}
+
+.tickets-table th {
+    height: 48px;
+
+    padding-left: 16px;
+    padding-right: 16px;
+
+    font-size: 9.5px;
+}
+
+.tickets-table td {
+    padding: 15px 16px;
+
+    font-size: 11.5px;
+}
+
+.ticket-id {
+    gap: 5px;
+}
+
+.ticket-id a {
+    font-size: 11.5px;
+}
+
+.ticket-id span {
+    font-size: 9px;
+}
+
+.ticket-store {
+    max-width: 240px;
+}
+
+.ticket-store strong {
+    font-size: 11.5px;
+}
+
+.ticket-store span {
+    max-width: 235px;
+
+    margin-top: 4px;
+
+    font-size: 9px;
+}
+
+.ticket-category {
+    max-width: 190px;
+
+    font-size: 11px;
+}
+
+.ticket-badge {
+    min-height: 28px;
+
+    padding: 5px 10px;
+
+    font-size: 9px;
+}
+
+.ticket-priority {
+    font-size: 9.5px;
+}
+
+.ticket-owner-avatar {
+    width: 31px;
+    height: 31px;
+
+    flex-basis: 31px;
+
+    font-size: 9px;
+}
+
+.ticket-owner-name,
+.ticket-owner-empty {
+    font-size: 10px;
+}
+
+.ticket-sla {
+    font-size: 9.5px;
+}
+
+.ticket-open {
+    width: 35px;
+    height: 35px;
+}
+
+.ticket-open svg {
+    width: 17px;
+    height: 17px;
+}
+
+.tickets-panel-head {
+    min-height: 60px;
+
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.tickets-panel-head strong {
+    font-size: 12px;
+}
+
+.tickets-panel-head span {
+    font-size: 9.5px;
+}
+
+
+/* Toolbar un poco más cómoda */
+
+.tickets-input,
+.tickets-select {
+    height: 44px;
+
+    font-size: 11px;
+}
+
+.tickets-filter-button,
+.tickets-clear {
+    height: 44px;
+
+    font-size: 10.5px;
+}
+
+
+/* Más aire entre tabla y bordes */
+
+.tickets-panel {
+    margin-top: 16px;
+}
+
+
+/* Pantallas grandes */
+
+@media (min-width: 1500px) {
+
+    .tickets-table th {
+        font-size: 10px;
+    }
+
+    .tickets-table td {
+        font-size: 12px;
+    }
+
+    .ticket-id a,
+    .ticket-store strong {
+        font-size: 12px;
+    }
+
+    .ticket-store span,
+    .ticket-id span {
+        font-size: 9.5px;
+    }
+
+}
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="tickets-page">
+
+    <div class="tickets-view-tabs" role="navigation" aria-label="Vista de tickets">
+        <a href="?vista=encargado" class="{% if vista_actual == 'encargado' %}is-active{% endif %}">Mis tickets</a>
+        <a href="?vista=partner" class="{% if vista_actual == 'partner' %}is-active{% endif %}">Partner</a>
+        {% if request.user.is_superuser or request.user.perfil.rol == 'ADMIN' %}<a href="?vista=todos" class="{% if vista_actual == 'todos' %}is-active{% endif %}">Todos los tickets</a>{% endif %}
+    </div>
+
+
+    <!-- =================================================
+         HEADER
+    ================================================== -->
+
+    <div class="tickets-heading">
+
+        <div class="tickets-heading-copy">
+
+            <h2>
+                Tickets
+            </h2>
+
+            <p>
+                Consulta y seguimiento de la operación general.
+            </p>
+
+        </div>
+
+
+        <div class="tickets-heading-actions">
+            {% if request.user.is_superuser or request.user.perfil.rol == 'ADMIN' %}<a class="system-button" href="{% url 'tickets:lista' %}?requiere_admin=1">Requieren administración</a>{% endif %}
+            <a href="{% url 'tickets:crear' %}" class="tickets-create-button">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                Crear ticket CAROBRA
+            </a>
+            <div class="tickets-heading-count">
+                <strong>{{ pagina.paginator.count }}</strong>
+                resultado{{ pagina.paginator.count|pluralize }}
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         STATS
+    ================================================== -->
+
+    <section class="ticket-stats">
+
+
+        <a
+            href="{% url 'tickets:lista' %}"
+            class="ticket-stat"
+        >
+
+            <span class="ticket-stat-icon">
+
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M5 5.5h14v4a2.5 2.5 0 0 0 0 5v4H5v-4a2.5 2.5 0 0 0 0-5v-4Z"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                    />
+                </svg>
+
+            </span>
+
+            <div class="ticket-stat-copy">
+                <span>Total</span>
+                <strong>{{ estadisticas.total }}</strong>
+            </div>
+
+        </a>
+
+
+        <a
+            href="?estado=NUEVO"
+            class="ticket-stat"
+        >
+
+            <span class="ticket-stat-icon">
+
+                <svg viewBox="0 0 24 24" fill="none">
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                    />
+                    <path
+                        d="M12 8v4l3 2"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                    />
+                </svg>
+
+            </span>
+
+            <div class="ticket-stat-copy">
+                <span>Nuevos</span>
+                <strong>{{ estadisticas.nuevos }}</strong>
+            </div>
+
+        </a>
+
+
+        <a
+            href="?estado=EN_PROCESO"
+            class="ticket-stat warning"
+        >
+
+            <span class="ticket-stat-icon">
+
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M5 12h3l2-5 4 10 2-5h3"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+
+            </span>
+
+            <div class="ticket-stat-copy">
+                <span>En proceso</span>
+                <strong>{{ estadisticas.en_proceso }}</strong>
+            </div>
+
+        </a>
+
+
+        <div class="ticket-stat danger">
+
+            <span class="ticket-stat-icon">
+
+                <svg viewBox="0 0 24 24" fill="none">
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                    />
+                    <path
+                        d="M12 7v6M12 16.5v.5"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                    />
+                </svg>
+
+            </span>
+
+            <div class="ticket-stat-copy">
+                <span>SLA excedido</span>
+                <strong>{{ estadisticas.sla_excedidos }}</strong>
+            </div>
+
+        </div>
+
+
+    </section>
+
+
+    <!-- =================================================
+         FILTROS
+    ================================================== -->
+
+    <form
+        method="get"
+        class="tickets-toolbar"
+        id="ticketsFilters"
+    >
+
+        {% if orden_actual != "reciente" %}
+            <input type="hidden" name="orden" value="{{ orden_actual }}">
+            <input type="hidden" name="direccion" value="{{ direccion_orden }}">
+        {% endif %}
+        {% if vista_actual != "todos" %}<input type="hidden" name="vista" value="{{ vista_actual }}">{% endif %}
+
+        <div class="tickets-search">
+
+            <svg viewBox="0 0 24 24" fill="none">
+                <circle
+                    cx="11"
+                    cy="11"
+                    r="6.5"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                />
+                <path
+                    d="m16 16 4 4"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                />
+            </svg>
+
+            <input
+                type="search"
+                name="q"
+                value="{{ busqueda }}"
+                class="tickets-input"
+                placeholder="Buscar folio, ticket Bradescard, tienda o incidencia..."
+                autocomplete="off"
+            >
+
+        </div>
+
+        <select name="origen" class="tickets-select">
+            <option value="">Todos los orígenes</option>
+            {% for valor, etiqueta in origenes %}
+                <option value="{{ valor }}" {% if origen_actual == valor %}selected{% endif %}>{{ etiqueta }}</option>
+            {% endfor %}
+        </select>
+
+
+        <select
+            name="estado"
+            class="tickets-select"
+        >
+
+            <option value="">
+                Todos los estados
+            </option>
+
+            {% for valor, etiqueta in estados %}
+
+                <option
+                    value="{{ valor }}"
+                    {% if estado_actual == valor %}selected{% endif %}
+                >
+                    {{ etiqueta }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+
+        <select
+            name="categoria"
+            class="tickets-select"
+        >
+
+            <option value="">
+                Todas las categorías
+            </option>
+
+            {% for categoria in categorias %}
+
+                <option
+                    value="{{ categoria }}"
+                    {% if categoria_actual == categoria %}selected{% endif %}
+                >
+                    {{ categoria }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+
+        <select
+            name="tipo"
+            class="tickets-select"
+        >
+
+            <option value="">
+                Todos los tipos
+            </option>
+
+            {% for tipo in tipos %}
+
+                <option
+                    value="{{ tipo }}"
+                    {% if tipo_actual == tipo %}selected{% endif %}
+                >
+                    {{ tipo }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+        <select name="prioridad" class="tickets-select">
+            <option value="">Todas las prioridades</option>
+            {% for valor, etiqueta in prioridades %}
+                <option value="{{ valor }}" {% if prioridad_actual == valor %}selected{% endif %}>{{ etiqueta }}</option>
+            {% endfor %}
+        </select>
+
+        <div class="tickets-date-filter" role="group" aria-label="Rango de fecha de apertura">
+            <span class="tickets-date-filter-label">Apertura</span>
+            <input type="date" name="fecha_apertura_desde" value="{{ fecha_apertura_desde }}" class="tickets-select" aria-label="Apertura desde" title="Apertura desde">
+            <input type="date" name="fecha_apertura_hasta" value="{{ fecha_apertura_hasta }}" class="tickets-select" aria-label="Apertura hasta" title="Apertura hasta">
+        </div>
+        <div class="tickets-date-filter" role="group" aria-label="Rango de fecha de cierre">
+            <span class="tickets-date-filter-label">Cierre</span>
+            <input type="date" name="fecha_cierre_desde" value="{{ fecha_cierre_desde }}" class="tickets-select" aria-label="Cierre desde" title="Cierre desde">
+            <input type="date" name="fecha_cierre_hasta" value="{{ fecha_cierre_hasta }}" class="tickets-select" aria-label="Cierre hasta" title="Cierre hasta">
+        </div>
+
+
+        <button
+            type="submit"
+            class="tickets-filter-button"
+        >
+
+            <svg viewBox="0 0 24 24" fill="none">
+                <path
+                    d="M4 6h16M7 12h10M10 18h4"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                />
+            </svg>
+
+            Aplicar
+
+        </button>
+
+
+        <a
+            href="{% url 'tickets:lista' %}?vista={{ vista_actual }}"
+            class="tickets-clear"
+        >
+            Limpiar filtros
+        </a>
+
+    </form>
+
+
+    <!-- =================================================
+         LISTA
+    ================================================== -->
+
+    <section class="tickets-panel" id="ticketsResults" aria-live="polite">
+
+
+        <div class="tickets-panel-head">
+
+            <strong>
+                Resultados
+            </strong>
+
+            <span>
+                50 registros por página
+            </span>
+
+        </div>
+
+
+        {% if pagina.object_list %}
+
+            <div class="tickets-table-wrap">
+
+                <table class="tickets-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>
+                                <a class="tickets-sort-button {% if orden_actual == 'ticket' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=ticket&amp;direccion={% if orden_actual == 'ticket' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Ticket <span class="tickets-sort-indicator">{% if orden_actual == 'ticket' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a>
+                            </th>
+                            <th>
+                                <a class="tickets-sort-button {% if orden_actual == 'tienda' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=tienda&amp;direccion={% if orden_actual == 'tienda' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Tienda / incidencia <span class="tickets-sort-indicator">{% if orden_actual == 'tienda' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a>
+                            </th>
+                            <th>
+                                <a class="tickets-sort-button {% if orden_actual == 'categoria' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=categoria&amp;direccion={% if orden_actual == 'categoria' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Categoría <span class="tickets-sort-indicator">{% if orden_actual == 'categoria' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a>
+                            </th>
+                            <th>
+                                <a class="tickets-sort-button {% if orden_actual == 'tipo' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=tipo&amp;direccion={% if orden_actual == 'tipo' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Tipo <span class="tickets-sort-indicator">{% if orden_actual == 'tipo' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a>
+                            </th>
+                            <th>
+                                <a class="tickets-sort-button {% if orden_actual == 'estado' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=estado&amp;direccion={% if orden_actual == 'estado' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Estado <span class="tickets-sort-indicator">{% if orden_actual == 'estado' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a>
+                            </th>
+                            <th>
+                                <a class="tickets-sort-button {% if orden_actual == 'prioridad' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=prioridad&amp;direccion={% if orden_actual == 'prioridad' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Prioridad <span class="tickets-sort-indicator">{% if orden_actual == 'prioridad' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a>
+                            </th>
+                            <th>
+                                <a class="tickets-sort-button {% if orden_actual == 'responsable' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=responsable&amp;direccion={% if orden_actual == 'responsable' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">Responsable <span class="tickets-sort-indicator">{% if orden_actual == 'responsable' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a>
+                            </th>
+                            <th>
+                                <a class="tickets-sort-button {% if orden_actual == 'sla' %}is-active{% endif %}" href="?{% if parametros_orden %}{{ parametros_orden }}&amp;{% endif %}orden=sla&amp;direccion={% if orden_actual == 'sla' and direccion_orden == 'asc' %}desc{% else %}asc{% endif %}">SLA <span class="tickets-sort-indicator">{% if orden_actual == 'sla' %}{% if direccion_orden == 'asc' %}&uarr;{% else %}&darr;{% endif %}{% else %}&harr;{% endif %}</span></a>
+                            </th>
+                            <th></th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for ticket in pagina %}
+
+                            <tr>
+
+                                <!-- TICKET -->
+
+                                <td>
+
+                                    <div class="ticket-id">
+
+                                        <a
+                                            href="{% url 'tickets:detalle' ticket.folio %}"
+                                        >
+                                            {{ ticket.ticket_bradescard|default:ticket.folio }}
+                                        </a>
+
+                                        <span>
+                                            Ticket {{ ticket.get_origen_display }} · Folio interno
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- TIENDA -->
+
+                                <td>
+
+                                    <div class="ticket-store">
+
+                                        <strong>
+                                            {{ ticket.tienda|default:"Sin tienda" }}
+                                        </strong>
+
+                                        <span>
+                                            {% if ticket.incidencia_especifica %}
+                                                {{ ticket.incidencia_especifica }}
+                                            {% elif ticket.incidencia_general %}
+                                                {{ ticket.incidencia_general }}
+                                            {% else %}
+                                                Sin descripción
+                                            {% endif %}
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- CATEGORÍA -->
+
+                                <td>
+
+                                    <div
+                                        class="ticket-category"
+                                        title="{{ ticket.categoria }}"
+                                    >
+                                        {{ ticket.categoria|default:"—" }}
+                                    </div>
+
+                                </td>
+
+
+                                <!-- TIPO -->
+
+                                <td>
+                                    {{ ticket.tipo_externo|default:"—" }}
+                                </td>
+
+
+                                <!-- ESTADO -->
+
+                                <td>
+
+                                    <span
+                                        class="ticket-badge {{ ticket.estado_interno|lower }}"
+                                    >
+                                        {{ ticket.get_estado_interno_display }}
+                                    </span>
+
+                                </td>
+
+
+                                <!-- PRIORIDAD -->
+
+                                <td>
+
+                                    {% if ticket.prioridad %}
+
+                                        <span
+                                            class="ticket-priority {{ ticket.prioridad|lower }}"
+                                        >
+                                            {{ ticket.get_prioridad_display }}
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="ticket-owner-empty">
+                                            —
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- RESPONSABLE -->
+
+                                <td>
+
+                                    {% if ticket.responsable %}
+
+                                        <div class="ticket-owner">
+
+                                            <span class="ticket-owner-avatar">
+
+                                                {% if ticket.responsable.first_name %}
+                                                    {{ ticket.responsable.first_name|slice:":1" }}
+                                                {% else %}
+                                                    {{ ticket.responsable.username|slice:":1" }}
+                                                {% endif %}
+
+                                            </span>
+
+                                            <span class="ticket-owner-name">
+
+                                                {% if ticket.responsable.get_full_name %}
+                                                    {{ ticket.responsable.get_full_name }}
+                                                {% else %}
+                                                    {{ ticket.responsable.username }}
+                                                {% endif %}
+
+                                            </span>
+
+                                        </div>
+
+                                    {% else %}
+
+                                        <span class="ticket-owner-empty">
+                                            Sin asignar
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- SLA -->
+
+                                <td>
+
+                                    {% if ticket.sla_vencido_actual %}
+
+                                        <span class="ticket-sla exceeded">
+
+                                            <span class="ticket-sla-dot"></span>
+
+                                            Excedido
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="ticket-sla">
+
+                                            <span class="ticket-sla-dot"></span>
+
+                                            En tiempo
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- ABRIR -->
+
+                                <td>
+
+                                    <a
+                                        href="{% url 'tickets:detalle' ticket.folio %}"
+                                        class="ticket-open"
+                                        aria-label="Abrir ticket {{ ticket.ticket_bradescard|default:ticket.folio }}"
+                                    >
+
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <path
+                                                d="m9 6 6 6-6 6"
+                                                stroke="currentColor"
+                                                stroke-width="1.7"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                            />
+                                        </svg>
+
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- =========================================
+                 PAGINACIÓN
+            ========================================== -->
+
+            <div class="tickets-pagination">
+
+                <div class="pagination-info">
+
+                    Página
+                    <strong>{{ pagina.number }}</strong>
+                    de
+                    <strong>{{ pagina.paginator.num_pages }}</strong>
+
+                    ·
+
+                    {{ pagina.paginator.count }}
+                    resultado{{ pagina.paginator.count|pluralize }}
+
+                </div>
+
+
+                <div class="pagination-actions">
+
+                    <form method="get" class="pagination-jump">
+                        {% for nombre, valor in request.GET.items %}
+                            {% if nombre != "page" %}
+                                <input type="hidden" name="{{ nombre }}" value="{{ valor }}">
+                            {% endif %}
+                        {% endfor %}
+                        <label for="ticket-page">Ir a página</label>
+                        <select id="ticket-page" name="page" onchange="this.form.submit()">
+                            {% for numero_pagina in pagina.paginator.page_range %}
+                                <option value="{{ numero_pagina }}" {% if numero_pagina == pagina.number %}selected{% endif %}>{{ numero_pagina }}</option>
+                            {% endfor %}
+                        </select>
+                        <noscript><button type="submit" class="pagination-button">Ir</button></noscript>
+                    </form>
+
+
+                    {% if pagina.has_previous %}
+
+                        <a
+                            class="pagination-button"
+                            href="?{% if parametros_paginacion %}{{ parametros_paginacion }}&{% endif %}page={{ pagina.previous_page_number }}"
+                        >
+                            ← Anterior
+                        </a>
+
+                    {% endif %}
+
+
+                    {% for numero_pagina in paginas_visibles %}
+                        {% if numero_pagina == pagina.paginator.ELLIPSIS %}
+                            <span class="pagination-current">…</span>
+                        {% elif numero_pagina == pagina.number %}
+                            <span class="pagination-current">{{ numero_pagina }}</span>
+                        {% else %}
+                            <a class="pagination-button" href="?{% if parametros_paginacion %}{{ parametros_paginacion }}&{% endif %}page={{ numero_pagina }}">{{ numero_pagina }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+
+                    {% if pagina.has_next %}
+
+                        <a
+                            class="pagination-button"
+                            href="?{% if parametros_paginacion %}{{ parametros_paginacion }}&{% endif %}page={{ pagina.next_page_number }}"
+                        >
+                            Siguiente →
+                        </a>
+
+                    {% endif %}
+
+
+                </div>
+
+            </div>
+
+
+        {% else %}
+
+
+            <!-- =========================================
+                 VACÍO
+            ========================================== -->
+
+            <div class="tickets-empty">
+
+                <div class="tickets-empty-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <circle
+                            cx="11"
+                            cy="11"
+                            r="6"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+                        <path
+                            d="m16 16 4 4"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+                    </svg>
+
+                </div>
+
+                <strong>
+                    No encontramos tickets
+                </strong>
+
+                <span>
+                    Prueba cambiando la búsqueda o los filtros seleccionados.
+                </span>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const filters = document.getElementById("ticketsFilters");
+    let requestInFlight = null;
+
+    const actualizarTabla = async (url, actualizarHistorial = true) => {
+        requestInFlight?.abort();
+        requestInFlight = new AbortController();
+        const requestActual = requestInFlight;
+        const resultados = document.getElementById("ticketsResults");
+
+        if (!resultados) {
+            window.location.assign(url);
+            return;
+        }
+
+        resultados.classList.add("is-loading");
+
+        try {
+            const response = await fetch(url, {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                signal: requestActual.signal,
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = await response.text();
+            const reemplazo = wrapper.querySelector("#ticketsResults");
+            if (!reemplazo) throw new Error("Respuesta de tabla no válida");
+
+            resultados.replaceWith(reemplazo);
+            if (actualizarHistorial) window.history.pushState({}, "", url);
+        } catch (error) {
+            if (error.name !== "AbortError") window.location.assign(url);
+        } finally {
+            if (requestInFlight === requestActual) requestInFlight = null;
+        }
+    };
+
+    const urlDeFiltros = () => {
+        const url = new URL(filters.action || window.location.href, window.location.origin);
+        url.search = new URLSearchParams(new FormData(filters)).toString();
+        return url;
+    };
+
+    filters?.addEventListener("submit", event => {
+        event.preventDefault();
+        actualizarTabla(urlDeFiltros());
+    });
+
+    filters?.querySelectorAll("select").forEach(select => {
+        select.addEventListener("change", () => actualizarTabla(urlDeFiltros()));
+    });
+
+    document.addEventListener("click", event => {
+        const enlace = event.target.closest(
+            "#ticketsResults .tickets-sort-button, #ticketsResults .pagination-button, .tickets-clear"
+        );
+        if (!enlace) return;
+
+        event.preventDefault();
+        actualizarTabla(new URL(enlace.href, window.location.origin));
+    });
+
+    document.addEventListener("submit", event => {
+        if (!event.target.matches("#ticketsResults .pagination-jump")) return;
+
+        event.preventDefault();
+        const url = new URL(window.location.href);
+        url.search = new URLSearchParams(new FormData(event.target)).toString();
+        actualizarTabla(url);
+    });
+
+    window.addEventListener("popstate", () => actualizarTabla(window.location.href, false));
+})();
+</script>
+{% endblock %}

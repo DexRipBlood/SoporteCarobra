@@ -1,0 +1,6 @@
+<div class="user-admin-field {% if wide %}is-wide{% endif %} {% if field.errors %}has-error{% endif %}">
+    <label for="{{ field.id_for_label }}">{{ field.label }}{% if required %}<span>*</span>{% endif %}</label>
+    {{ field }}
+    {% if help_text %}<p class="user-admin-help">{{ help_text }}</p>{% endif %}
+    {% for error in field.errors %}<p class="user-admin-error">{{ error }}</p>{% endfor %}
+</div>

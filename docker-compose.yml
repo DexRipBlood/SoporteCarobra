@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: tickets-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - tickets_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tickets_user -d tickets"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: ./app
+    container_name: tickets-web
+    restart: unless-stopped
+    env_file:
+      - .env
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    ports:
+      - "8085:8000"
+
+    volumes:
+      - ./app:/app
+      - ./media:/app/media
+      - ./static:/app/static
+
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.routers.tickets.rule=Host(`soportecarobra.online`) || Host(`www.soportecarobra.online`)"
+      - "traefik.http.routers.tickets.entrypoints=websecure"
+      - "traefik.http.routers.tickets.tls=true"
+      - "traefik.http.routers.tickets.tls.certresolver=letsencrypt"
+
+      - "traefik.http.services.tickets.loadbalancer.server.port=8000"
+
+
+volumes:
+  tickets_postgres:

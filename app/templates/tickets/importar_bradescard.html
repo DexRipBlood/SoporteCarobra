@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Importar tickets · CAROBRA Operations{% endblock %}
+
+{% block content %}
+<div class="import-page">
+    <header class="import-heading">
+        <div class="import-heading-copy">
+            <div class="import-eyebrow">Centro de importaciones · Tickets externos</div>
+            <h2>Importar tickets</h2>
+            <p>
+                Analiza la plantilla antes de aplicar cambios. El sistema compara
+                cada registro con la base actual y conserva la trazabilidad completa.
+            </p>
+        </div>
+        <a href="{% url 'tickets:importaciones' %}" class="system-button">Volver a importaciones</a>
+    </header>
+
+    <section class="card import-card">
+        <div class="import-card-body">
+            {% if error %}
+                <div class="auth-error" role="alert">
+                    <strong>No se pudo analizar el archivo.</strong> {{ error }}
+                </div>
+            {% endif %}
+
+            {% if form.errors %}
+                <div class="auth-error" role="alert">
+                    <strong>Revisa el archivo seleccionado.</strong>
+                    {% for field in form %}
+                        {% for field_error in field.errors %}<div>{{ field_error }}</div>{% endfor %}
+                    {% endfor %}
+                    {% for field_error in form.non_field_errors %}<div>{{ field_error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" id="importForm">
+                {% csrf_token %}
+
+                <div style="margin-bottom:16px">
+                    <label for="{{ form.empresa.id_for_label }}" style="display:block;margin-bottom:7px;color:var(--text-soft);font-size:10px">Empresa</label>
+                    {{ form.empresa }}
+                </div>
+
+                <label class="upload-zone" id="uploadZone" for="id_archivo">
+                    <span class="upload-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 15V4m0 0L8 8m4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5 14v5h14v-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span class="upload-title">Selecciona o arrastra la plantilla Excel</span>
+                    <span class="upload-text">Formato .xlsx · Máximo 20 MB</span>
+                    <span class="upload-file-name" id="uploadFileName">Ningún archivo seleccionado</span>
+                    <input type="file" name="archivo" accept=".xlsx" required class="file-input" id="id_archivo">
+                </label>
+
+                <div class="import-actions">
+                    <a href="{% url 'dashboard' %}" class="system-button">Cancelar</a>
+                    <button type="submit" class="system-button system-button-primary" id="analyzeButton">
+                        Analizar archivo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    {% if resultado %}
+        <section class="card import-results">
+            <header class="import-results-head">
+                <div>
+                    <div class="import-results-title">Resultado del análisis</div>
+                    <div class="import-results-file">{{ resultado.nombre_original }}</div>
+                </div>
+                <span class="import-status">Archivo analizado</span>
+            </header>
+
+            <div class="import-stats">
+                <div class="import-stat"><span>Total</span><strong>{{ resultado.total }}</strong></div>
+                <div class="import-stat"><span>Nuevos</span><strong>{{ resultado.nuevos }}</strong></div>
+                <div class="import-stat"><span>Actualizados</span><strong>{{ resultado.actualizados }}</strong></div>
+                <div class="import-stat"><span>Sin cambios</span><strong>{{ resultado.sin_cambios }}</strong></div>
+            </div>
+
+            <div class="import-preview">
+                <div class="import-preview-box">
+                    <div class="import-preview-title">Muestra de tickets nuevos</div>
+                    {% for ticket in resultado.muestra_nuevos %}
+                        <span class="import-chip">{{ ticket }}</span>
+                    {% empty %}
+                        <span class="import-empty">No hay tickets nuevos.</span>
+                    {% endfor %}
+                </div>
+
+                <div class="import-preview-box">
+                    <div class="import-preview-title">Muestra de actualizaciones</div>
+                    {% for ticket in resultado.muestra_actualizados %}
+                        <span class="import-chip">{{ ticket }}</span>
+                    {% empty %}
+                        <span class="import-empty">No hay tickets para actualizar.</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <footer class="import-result-footer">
+                    <div>
+                        Esta es una previsualización. Aún no se modificó ningún ticket.
+                        Se procesarán <strong>{{ resultado.total }}</strong> registros al confirmar.
+                    </div>
+                    <form method="post" action="{% url 'tickets:confirmar_importacion_bradescard' %}" id="confirmImportForm">
+                        {% csrf_token %}
+                        <fieldset style="padding:16px;border:1px solid var(--border);border-radius:12px;margin-bottom:16px">
+                            <legend>Categorías a importar</legend>
+                            <p>Marca las categorías que necesitas. Las desmarcadas se omitirán.</p>
+                            {% for categoria in resultado.categorias_disponibles %}<label style="display:block;margin:10px 0"><input type="checkbox" name="categorias" value="{{ categoria }}" {% if categoria in resultado.categorias_seleccionadas %}checked{% endif %}> {{ categoria }}</label>{% endfor %}
+                            <p><strong>{{ resultado.total }}</strong> seleccionados · <strong>{{ resultado.omitidos }}</strong> omitidos en esta previsualización.</p>
+                            <button type="submit" name="accion" value="filtrar" class="system-button">Actualizar previsualización</button>
+                        </fieldset>
+                        <button type="submit" class="system-button system-button-primary" id="confirmImportButton">
+                            Confirmar importación
+                        </button>
+                    </form>
+            </footer>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const form = document.getElementById("importForm");
+    const button = document.getElementById("analyzeButton");
+    const input = document.getElementById("id_archivo");
+    const zone = document.getElementById("uploadZone");
+    const fileName = document.getElementById("uploadFileName");
+    const confirmForm = document.getElementById("confirmImportForm");
+    const confirmButton = document.getElementById("confirmImportButton");
+
+    input?.addEventListener("change", () => {
+        fileName.textContent = input.files?.[0]?.name || "Ningún archivo seleccionado";
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+        zone?.addEventListener(eventName, () => zone.classList.add("is-dragging"));
+    });
+    ["dragleave", "drop"].forEach((eventName) => {
+        zone?.addEventListener(eventName, () => zone.classList.remove("is-dragging"));
+    });
+
+    form?.addEventListener("submit", () => {
+        button.disabled = true;
+        button.textContent = "Analizando…";
+    });
+
+    confirmForm?.addEventListener("submit", (event) => {
+        if (event.submitter?.value === "filtrar") return;
+        if (!window.confirm("¿Confirmas la importación de los tickets analizados?")) {
+            event.preventDefault();
+            return;
+        }
+        confirmButton.disabled = true;
+        confirmButton.textContent = "Importando…";
+    });
+})();
+</script>
+{% endblock %}

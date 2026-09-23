@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Inventario · CAROBRA{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inventario.css' %}">
+{% endblock %}
+{% block content %}
+<section class="inventory-page" aria-labelledby="inventory-title">
+    <header class="inventory-header">
+        <span>Operación</span>
+        <h2 id="inventory-title">Inventario</h2>
+    </header>
+    <div class="inventory-panel" aria-label="Panel de inventario"></div>
+</section>
+{% endblock %}

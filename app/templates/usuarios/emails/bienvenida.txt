@@ -1,0 +1,15 @@
+CAROBRA · OPERATIONS CENTER
+
+Hola {{ usuario_invitado.get_full_name|default:usuario_invitado.username }},
+
+Tu cuenta fue habilitada para operar dentro del sistema de tickets CAROBRA.
+
+Usuario asignado: {{ usuario_invitado.username }}
+
+Define tu contraseña personal desde este enlace seguro:
+{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
+
+El enlace es personal, solo funciona una vez y vence en 24 horas. No lo compartas con otras personas.
+
+Plataforma interna · Acceso exclusivo para personal autorizado
+CAROBRA Operations Center

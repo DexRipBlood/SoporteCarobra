@@ -1,0 +1,56 @@
+{% if messages %}
+    <div class="messages-stack" id="messagesStack">
+
+        {% for message in messages %}
+
+            <div
+                class="app-message app-message-{{ message.tags|default:'info' }}"
+                role="alert"
+                data-auto-dismiss="true"
+            >
+
+                <div class="app-message-icon">
+
+                    {% if message.tags == "success" %}
+                        ✓
+                    {% elif message.tags == "error" %}
+                        !
+                    {% elif message.tags == "warning" %}
+                        !
+                    {% else %}
+                        i
+                    {% endif %}
+
+                </div>
+
+
+                <div class="app-message-content">
+
+                    <span>
+                        {{ message }}
+                    </span>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="app-message-close"
+                    aria-label="Cerrar mensaje"
+                >
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="m7 7 10 10M17 7 7 17"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+{% endif %}

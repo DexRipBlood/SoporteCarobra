@@ -1,0 +1,34 @@
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Django
+*.sqlite3
+media/
+staticfiles/
+
+# Backups
+backups/
+*.bak
+*.backup
+*.tar.gz
+*.zip
+docker-compose.yml.bak_dominio
+
+# Logs
+*.log
+
+# IDE / Sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

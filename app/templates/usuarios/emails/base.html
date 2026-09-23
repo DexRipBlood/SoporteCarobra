@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>{% block email_title %}CAROBRA Operations Center{% endblock %}</title>
+    <style>
+        @media only screen and (max-width: 640px) {
+            .email-shell { width:100% !important; }
+            .email-card { border-radius:0 !important; }
+            .email-header,.email-content,.email-footer { padding-left:24px !important; padding-right:24px !important; }
+            .email-title { font-size:28px !important; line-height:34px !important; }
+            .email-button { display:block !important; text-align:center !important; }
+        }
+    </style>
+</head>
+<body style="margin:0;padding:0;background:#eef2f7;color:#172033;font-family:Arial,'Helvetica Neue',sans-serif;-webkit-text-size-adjust:100%;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">{% block preheader %}Notificación segura de CAROBRA Operations Center.{% endblock %}</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#eef2f7;">
+        <tr>
+            <td align="center" style="padding:34px 12px;">
+                <table role="presentation" width="620" cellspacing="0" cellpadding="0" border="0" class="email-shell email-card" style="width:620px;max-width:620px;background:#ffffff;border:1px solid #dde4ee;border-radius:22px;box-shadow:0 18px 50px rgba(22,34,55,.10);overflow:hidden;">
+                    <tr>
+                        <td class="email-header" style="padding:29px 38px;background:#101b2f;background-image:linear-gradient(135deg,#101b2f 0%,#172b4b 68%,#234a9b 100%);">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td width="50" valign="middle">
+                                        <div style="width:46px;height:46px;line-height:46px;text-align:center;border:1px solid rgba(255,255,255,.25);border-radius:14px;background:#4f7cff;color:#ffffff;font-size:19px;font-weight:800;box-shadow:0 8px 22px rgba(49,94,228,.35);">C</div>
+                                    </td>
+                                    <td valign="middle" style="padding-left:13px;">
+                                        <div style="color:#ffffff;font-size:15px;font-weight:800;letter-spacing:2px;line-height:20px;">CAROBRA</div>
+                                        <div style="margin-top:2px;color:#aab9d2;font-size:10px;letter-spacing:.4px;line-height:16px;">OPERATIONS CENTER</div>
+                                    </td>
+                                    <td align="right" valign="middle">
+                                        <span style="display:inline-block;padding:6px 9px;border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#bfcae0;font-size:9px;font-weight:700;letter-spacing:.8px;">ACCESO SEGURO</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="email-content" style="padding:42px 44px 38px;">
+                            {% block email_content %}{% endblock %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="email-footer" style="padding:22px 44px 25px;border-top:1px solid #e7ebf2;background:#f8fafc;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="color:#738096;font-size:10px;line-height:17px;">Plataforma interna · Acceso exclusivo para personal autorizado</td>
+                                    <td align="right" style="color:#9aa5b5;font-size:10px;line-height:17px;white-space:nowrap;">CAROBRA · {% now "Y" %}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+                <div style="max-width:580px;margin:17px auto 0;color:#98a3b3;font-size:9px;line-height:15px;text-align:center;">Este mensaje fue generado automáticamente por CAROBRA Operations Center. No respondas directamente a este correo.</div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<div class="photo-editor {% if form.foto.errors %}has-error{% endif %}" data-photo-editor>
+    <div class="photo-editor-preview" aria-hidden="true">
+        <img
+            {% if avatar_perfil.foto %}src="{% url 'usuario_foto' avatar_user.id %}?v={{ avatar_perfil.actualizado_at|date:'U' }}"{% else %}hidden{% endif %}
+            alt=""
+            data-photo-preview
+        >
+        <span {% if avatar_perfil.foto %}hidden{% endif %} data-photo-fallback>{% if avatar_user %}{{ avatar_user.first_name|default:avatar_user.username|slice:":1"|upper }}{% else %}N{% endif %}</span>
+        <i></i>
+    </div>
+    <div class="photo-editor-content">
+        <div>
+            <strong>Foto de perfil</strong>
+            <span>JPG, PNG o WebP · máximo 5 MB</span>
+        </div>
+        <div class="photo-editor-actions">
+            <label for="{{ form.foto.id_for_label }}" class="photo-editor-upload">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v4h14v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>{% if avatar_perfil.foto %}Cambiar foto{% else %}Seleccionar foto{% endif %}</span>
+            </label>
+            {{ form.foto }}
+            {% if avatar_perfil.foto %}
+                <label class="photo-editor-remove" for="{{ form.eliminar_foto.id_for_label }}">
+                    {{ form.eliminar_foto }}
+                    <span>Quitar</span>
+                </label>
+            {% endif %}
+        </div>
+        <small data-photo-name>{% if avatar_perfil.foto %}Foto actual guardada{% else %}Aún no se ha seleccionado una foto{% endif %}</small>
+        {% for error in form.foto.errors %}<p class="photo-editor-error">{{ error }}</p>{% endfor %}
+    </div>
+</div>

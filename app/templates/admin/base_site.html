@@ -1,0 +1,20 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}Administración · CAROBRA Operations{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/admin-system.css' %}">
+{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <span class="carobra-admin-mark">C</span>
+        <span><strong>CAROBRA</strong><small>Operations Administration</small></span>
+    </a>
+</div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

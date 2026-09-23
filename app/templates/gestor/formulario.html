@@ -1,0 +1,17 @@
+{% extends "gestor/base.html" %}
+{% block gestor_content %}
+<div class="gst-narrow">
+    <header class="gst-heading"><div><span class="gst-eyebrow">{% if pendiente %}{{ pendiente.folio }} · Seguimiento{% else %}Gestor · Nueva actividad{% endif %}</span><h2>{% if pendiente %}Editar pendiente{% else %}Nuevo pendiente{% endif %}</h2><p>{% if pendiente %}Actualiza el avance, el equipo responsable y lo que sigue.{% else %}Comienza con lo esencial; podrás actualizar su seguimiento después.{% endif %}</p></div><a href="{% if pendiente %}{% url 'gestor:detalle' pendiente.folio %}{% else %}{% url 'gestor:lista' %}{% endif %}" class="gst-btn">← Volver</a></header>
+    {% if pendiente %}<p class="gst-note">En espera requiere bloqueo, quién bloquea o una explicación, y siguiente acción. En curso se recomienda responsable y compromiso. Al completar se registra el cierre; al reabrir se conserva el historial.</p>{% endif %}
+    <section class="gst-card"><header class="gst-card-head"><h3>{% if pendiente %}Datos y seguimiento{% else %}Datos del pendiente{% endif %}</h3>{% if not pendiente %}<span class="gst-badge">Estado inicial: Pendiente</span>{% endif %}</header>
+        <form method="post" class="gst-body" novalidate>{% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for hidden in form.hidden_fields %}{{ hidden }}{{ hidden.errors }}{% endfor %}
+            <div class="gst-form-grid">{% for field in form.visible_fields %}<div class="gst-field {% if field.name == 'titulo' or field.name == 'detalle' or field.name == 'siguiente_accion' or field.name == 'comentario' %}gst-field-wide{% endif %}">
+                {{ field.label_tag }}{{ field }}{% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}{{ field.errors }}
+            </div>{% endfor %}</div>
+            <footer class="gst-form-footer"><a class="gst-btn" href="{% if pendiente %}{% url 'gestor:detalle' pendiente.folio %}{% else %}{% url 'gestor:lista' %}{% endif %}">Volver sin guardar</a><button type="submit" class="gst-btn gst-btn-primary">{% if pendiente %}Guardar cambios{% else %}Crear pendiente{% endif %}</button></footer>
+        </form>
+    </section>
+</div>
+{% endblock %}

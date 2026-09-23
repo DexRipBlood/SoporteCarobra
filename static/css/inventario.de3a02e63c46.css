@@ -1,0 +1,33 @@
+.inventory-page {
+    width: min(1500px, 100%);
+    margin: 0 auto;
+    animation: inventory-enter .42s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.inventory-header { margin-bottom: 20px; }
+.inventory-header span {
+    color: var(--primary);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+.inventory-header h2 {
+    margin: 6px 0 0;
+    font-size: clamp(28px, 4vw, 38px);
+    letter-spacing: -.04em;
+}
+.inventory-panel {
+    min-height: min(68vh, 720px);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+@keyframes inventory-enter {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .inventory-page { animation: none; }
+}

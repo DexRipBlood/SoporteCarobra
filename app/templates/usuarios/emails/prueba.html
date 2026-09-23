@@ -1,0 +1,24 @@
+{% extends "usuarios/emails/base.html" %}
+
+{% block email_title %}Prueba de correo CAROBRA{% endblock %}
+{% block preheader %}La configuración de correo de CAROBRA Operations Center funciona correctamente.{% endblock %}
+
+{% block email_content %}
+    <div style="display:inline-block;padding:6px 9px;border-radius:7px;background:#e9f8f1;color:#14875d;font-size:9px;font-weight:800;letter-spacing:1px;line-height:13px;">CONFIGURACIÓN VERIFICADA</div>
+    <h1 class="email-title" style="margin:16px 0 0;color:#172033;font-size:34px;line-height:40px;font-weight:750;letter-spacing:-1px;">El correo está funcionando</h1>
+    <p style="margin:15px 0 0;color:#59677c;font-size:14px;line-height:23px;">Este mensaje confirma que CAROBRA Tickets puede entregar notificaciones HTML mediante el servidor configurado.</p>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:25px;border:1px solid #dce7e2;border-radius:12px;background:#f4fbf8;">
+        <tr>
+            <td width="42" valign="middle" style="padding:16px 0 16px 17px;color:#19a874;font-size:22px;font-weight:800;">✓</td>
+            <td style="padding:16px 17px 16px 5px;color:#52685f;font-size:11px;line-height:18px;"><strong style="display:block;color:#203b31;font-size:12px;">Entrega SMTP confirmada</strong>El diseño corporativo, el remitente y el contenido dinámico están activos.</td>
+        </tr>
+    </table>
+
+    <div style="margin:27px 0 0;">
+        <a class="email-button" href="{{ access_url }}/login/" style="display:inline-block;padding:14px 22px;border-radius:10px;background:#416ff1;background-image:linear-gradient(135deg,#5b84ff,#315ee4);color:#ffffff;font-size:13px;font-weight:800;line-height:18px;text-decoration:none;box-shadow:0 9px 24px rgba(49,94,228,.25);">Abrir CAROBRA Tickets&nbsp;&nbsp;→</a>
+    </div>
+
+    <p style="margin:27px 0 0;color:#8a96a7;font-size:10px;line-height:17px;">Prueba enviada a:</p>
+    <p style="margin:4px 0 0;color:#2b3a50;font-size:11px;font-weight:700;line-height:17px;">{{ destinatario }}</p>
+{% endblock %}

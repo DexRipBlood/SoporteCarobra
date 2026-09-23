@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios · CAROBRA Operations{% endblock %}
+
+{% block content %}
+<div class="users-page">
+    <section class="users-heading">
+        <div>
+            <span class="users-eyebrow"><i></i>Administración de acceso</span>
+            <h2>Equipo y permisos</h2>
+            <p>Gestiona las cuentas que participan en la operación y define su nivel de acceso.</p>
+        </div>
+        <a href="{% url 'tickets:permisos' %}" class="system-button">Permisos sobre tickets</a>
+        <a href="{% url 'usuario_crear' %}" class="system-button system-button-primary users-create-button">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 19c.6-3.8 2.5-6 5.5-6 1.4 0 2.6.5 3.5 1.3M17 11v8M13 15h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Nuevo usuario
+        </a>
+    </section>
+
+    <section class="users-stats" aria-label="Resumen de usuarios">
+        <article class="users-stat">
+            <span class="users-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M16 20c-.4-3-1.8-5-4-5s-3.6 2-4 5M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM18 10a2.5 2.5 0 0 1 0 5M19 16c1.2.8 1.8 2.1 2 4M6 10a2.5 2.5 0 0 0 0 5M5 16c-1.2.8-1.8 2.1-2 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+            <div><span>Total de cuentas</span><strong>{{ estadisticas.total }}</strong></div>
+        </article>
+        <article class="users-stat is-success">
+            <span class="users-stat-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="m8.5 12 2.2 2.2 4.8-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div><span>Cuentas activas</span><strong>{{ estadisticas.activos }}</strong></div>
+        </article>
+        <article class="users-stat is-admin">
+            <span class="users-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v5c0 4.5 2.8 8.1 7 10 4.2-1.9 7-5.5 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12h6M12 9v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+            <div><span>Administradores</span><strong>{{ estadisticas.administradores }}</strong></div>
+        </article>
+        <article class="users-stat is-muted">
+            <span class="users-stat-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 8.5 15.5 15.5M15.5 8.5l-7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+            <div><span>Sin acceso</span><strong>{{ estadisticas.inactivos }}</strong></div>
+        </article>
+    </section>
+
+    <form method="get" class="users-toolbar" role="search">
+        <div class="users-search">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" stroke="currentColor" stroke-width="1.7"/><path d="m15 15 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <input type="search" name="q" value="{{ busqueda }}" placeholder="Buscar por nombre, correo, área o empleado…" aria-label="Buscar usuarios">
+        </div>
+        <select name="rol" aria-label="Filtrar por rol">
+            <option value="">Todos los roles</option>
+            {% for value, label in roles %}<option value="{{ value }}" {% if rol_actual == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <select name="estado" aria-label="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            <option value="activos" {% if estado_actual == "activos" %}selected{% endif %}>Activos</option>
+            <option value="inactivos" {% if estado_actual == "inactivos" %}selected{% endif %}>Sin acceso</option>
+        </select>
+        <button type="submit" class="system-button users-filter-button">Aplicar</button>
+        {% if busqueda or rol_actual or estado_actual %}<a href="{% url 'usuarios_lista' %}" class="users-clear-filter">Limpiar</a>{% endif %}
+    </form>
+
+    <section class="users-panel">
+        <header class="users-panel-head">
+            <div><strong>Directorio operativo</strong><span>{{ pagina.paginator.count }} resultado{{ pagina.paginator.count|pluralize }}</span></div>
+            <span class="users-sync-status"><i></i>Accesos sincronizados</span>
+        </header>
+
+        {% if pagina.object_list %}
+            <div class="users-table-wrap">
+                <table class="users-table">
+                    <thead><tr><th>Colaborador</th><th>Información corporativa</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+                    <tbody>
+                        {% for usuario in pagina %}
+                            <tr>
+                                <td>
+                                    <div class="users-person">
+                                        <span class="users-avatar">{% if usuario.perfil.foto %}<img class="avatar-image" src="{% url 'usuario_foto' usuario.id %}?v={{ usuario.perfil.actualizado_at|date:'U' }}" alt="">{% else %}{{ usuario.first_name|default:usuario.username|slice:":1"|upper }}{% endif %}</span>
+                                        <div><strong>{{ usuario.get_full_name|default:usuario.username }}</strong><span>@{{ usuario.username }}{% if usuario.email %} · {{ usuario.email }}{% endif %}</span></div>
+                                    </div>
+                                </td>
+                                <td><div class="users-corporate"><strong>{{ usuario.perfil.cargo|default:"Cargo pendiente" }}</strong><span>{{ usuario.perfil.area|default:"Área pendiente" }}{% if usuario.perfil.numero_empleado %} · {{ usuario.perfil.numero_empleado }}{% endif %}</span></div></td>
+                                <td><span class="users-role {% if usuario.is_superuser or usuario.perfil.rol == 'ADMIN' %}is-admin{% endif %}">{% if usuario.is_superuser or usuario.perfil.rol == "ADMIN" %}Administrador{% else %}Usuario{% endif %}</span></td>
+                                <td><span class="users-status {% if usuario.is_active and usuario.perfil.activo %}is-active{% endif %}"><i></i>{% if usuario.is_active and usuario.perfil.activo %}Activa{% else %}Sin acceso{% endif %}</span></td>
+                                <td><span class="users-last-login">{{ usuario.last_login|date:"d/m/Y · H:i"|default:"Sin actividad" }}</span></td>
+                                <td><a href="{% url 'usuario_editar' usuario.id %}" class="users-edit" aria-label="Editar a {{ usuario.get_full_name|default:usuario.username }}"><svg viewBox="0 0 24 24" fill="none"><path d="m14.5 5.5 4 4M5 19l2.7-.5L19 7.2 16.8 5 5.5 16.3 5 19Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if pagina.paginator.num_pages > 1 %}
+                <footer class="users-pagination">
+                    <span>Página <strong>{{ pagina.number }}</strong> de {{ pagina.paginator.num_pages }}</span>
+                    <div>
+                        {% if pagina.has_previous %}<a href="?{% if query_without_page %}{{ query_without_page }}&amp;{% endif %}page={{ pagina.previous_page_number }}" class="system-button">Anterior</a>{% endif %}
+                        {% if pagina.has_next %}<a href="?{% if query_without_page %}{{ query_without_page }}&amp;{% endif %}page={{ pagina.next_page_number }}" class="system-button">Siguiente</a>{% endif %}
+                    </div>
+                </footer>
+            {% endif %}
+        {% else %}
+            <div class="users-empty">
+                <span><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6" stroke="currentColor" stroke-width="1.7"/><path d="m15 15 5 5M8 10.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+                <h3>No encontramos usuarios</h3><p>Prueba con otra búsqueda o elimina los filtros aplicados.</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

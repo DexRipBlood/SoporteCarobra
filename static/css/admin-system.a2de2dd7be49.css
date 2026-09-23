@@ -1,0 +1,42 @@
+:root {
+    --primary: #4f7cff;
+    --secondary: #315ee4;
+    --accent: #ffffff;
+    --header-bg: #0d121c;
+    --header-color: #f4f6fb;
+    --breadcrumbs-bg: #151c29;
+    --breadcrumbs-fg: #c5ccda;
+    --body-bg: #f5f6f8;
+    --body-fg: #222936;
+    --link-fg: #315ee4;
+    --link-hover-color: #244bc4;
+    --hairline-color: rgba(20,28,42,.10);
+    --border-color: rgba(20,28,42,.12);
+}
+
+html[data-theme="dark"] {
+    --body-bg: #090c12;
+    --body-fg: #dce1ea;
+    --darkened-bg: #111620;
+    --selected-bg: #151c29;
+    --selected-row: rgba(79,124,255,.12);
+    --hairline-color: rgba(255,255,255,.08);
+    --border-color: rgba(255,255,255,.12);
+}
+
+body { font-family: Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+#header { min-height:64px; padding:0 24px; border-bottom:1px solid rgba(255,255,255,.08); }
+#branding h1 { margin:0; }
+#site-name a { display:flex; align-items:center; gap:11px; color:#fff; }
+#site-name span:last-child { display:flex; flex-direction:column; }
+#site-name strong { font-size:13px; letter-spacing:.12em; }
+#site-name small { margin-top:2px; color:rgba(255,255,255,.52); font-size:9px; font-weight:400; }
+.carobra-admin-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:11px; background:linear-gradient(145deg,#6c91ff,#315ee4); color:#fff; font-size:15px; font-weight:800; box-shadow:0 9px 24px rgba(49,94,228,.25); }
+#user-tools { font-size:10px; }
+div.breadcrumbs { padding:12px 24px; font-size:11px; }
+#content { padding:24px; }
+.module, .inline-group { border-radius:12px; overflow:hidden; box-shadow:none; }
+.module h2,.module caption,.inline-group h2 { padding:11px 13px; font-size:11px; letter-spacing:.03em; }
+button,.button,input[type=submit],input[type=button],.submit-row input { border-radius:8px; }
+input,select,textarea { border-radius:7px !important; }
+.object-tools a { border-radius:8px; }
