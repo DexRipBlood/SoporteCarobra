@@ -133,7 +133,8 @@ def _filas_reporte_incidencias(datos):
         inicio = max(ticket.creado_at, desde)
         fin = min(ticket.cerrado_at or hasta, hasta)
         total = _segundos_en_rango(ticket.creado_at, ticket.cerrado_at, desde, hasta)
-        efectivo = pausa = 0
+        efectivo = ticket.sla_legacy_segundos
+        pausa = 0
         for segmento in ticket.segmentos_sla.all():
             segundos = _segundos_en_rango(segmento.inicio, segmento.fin, desde, hasta)
             if segmento.cuenta_sla:
@@ -141,6 +142,7 @@ def _filas_reporte_incidencias(datos):
             else:
                 pausa += segundos
         estatus = ticket.estatus_operativo_actual.nombre if ticket.estatus_operativo_actual else "Sin definir"
+        sla = resumen_sla(ticket)
         tienda = ticket.tienda_registrada
         zona = tienda.zona if tienda else None
         filas.append({
@@ -153,6 +155,7 @@ def _filas_reporte_incidencias(datos):
             "total": total,
             "efectivo": efectivo,
             "pausa": pausa,
+            "excedido": sla["excedido"],
             "dias_calendario": max(1, (fin.date() - inicio.date()).days + 1),
             "folios": ticket.ticket_bradescard or ticket.folio,
             "afectacion": ticket.incidencia_general or ticket.categoria or "Sin clasificar",
@@ -195,7 +198,7 @@ def _matriz_sla_reporte(filas, datos):
         grupo["pausa"] += fila["pausa"]
         if ticket.sla_limite_minutos is not None:
             grupo["limites"].append(ticket.sla_limite_minutos)
-        grupo["excedido"] = grupo["excedido"] or ticket.sla_excedido
+        grupo["excedido"] = grupo["excedido"] or fila["excedido"]
         segmentos = list(ticket.segmentos_sla.all())
         if not segmentos:
             segmentos = [type("Segmento", (), {"inicio": ticket.creado_at, "fin": ticket.cerrado_at, "cuenta_sla": True})()]
@@ -230,7 +233,7 @@ def reportería_incidencias(request):
     filas = _filas_reporte_incidencias(form.cleaned_data) if form.is_valid() else []
     tickets_unicos = {fila["ticket"].pk: fila["ticket"] for fila in filas}
     total_tickets = len(tickets_unicos)
-    total_excedidos = sum(1 for ticket in tickets_unicos.values() if ticket.sla_excedido)
+    total_excedidos = sum(1 for fila in filas if fila["excedido"])
     total_cerrados = sum(1 for ticket in tickets_unicos.values() if ticket.cerrado_at)
     resumen_reporte = {
         "tickets": total_tickets,
@@ -328,7 +331,7 @@ def reportería_incidencias(request):
             dato["efectivo"] += fila["efectivo"]
             dato["pausa"] += fila["pausa"]
             dato["cerrados"] += int(ticket.cerrado_at is not None)
-            dato["excedidos"] += int(ticket.sla_excedido)
+            dato["excedidos"] += int(fila["excedido"])
         hoja_metricas = libro.create_sheet("Métricas por encargado")
         columnas_metricas = ["Encargado", "Tickets atendidos", "Tiempo efectivo", "Pausa por tercero", "Cierres efectivos", "SLA excedidos", "% cumplimiento SLA"]
         hoja_metricas.append(columnas_metricas)

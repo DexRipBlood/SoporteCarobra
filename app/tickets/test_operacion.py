@@ -6,19 +6,21 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from openpyxl import Workbook
 
 from usuarios.models import PerfilUsuario
-from .models import AsignacionPersonal, Empresa, Persona, Zona, Tienda, Ticket, ConfiguracionSLA, ProgramacionTrabajo, GrupoTrabajo, MembresiaGrupo, SegmentoSLA
+from .models import AsignacionPersonal, Empresa, Persona, Zona, Tienda, Ticket, ConfiguracionSLA, EstadoTicket, ProgramacionTrabajo, GrupoTrabajo, MembresiaGrupo, SegmentoSLA
 from .forms import ZonaForm, ProgramacionTrabajoForm
 from .permisos import tickets_visibles_para
 from .services.operacion import equipo_tienda, seguimiento_actual, iniciar_sla, resumen_sla, sincronizar_sla, cambiar_seguimiento, requieren_administracion
 from .services.operacion import con_sla_actual
 from .services.importacion_bradescard import importar_bradescard
 from .services.importador_excel import COLUMNAS_ESPERADAS, analizar_importacion_bradescard
+from .views import _filas_reporte_incidencias
 
 
 class OperacionConectadaTests(TestCase):
@@ -133,6 +135,184 @@ class OperacionConectadaTests(TestCase):
         self.assertEqual(resumen["pausa"], 7200)
         self.assertEqual(resumen["primera_atencion"], 900)
         self.assertEqual(t.segmentos_sla.filter(fin__isnull=True).count(), 1)
+
+    def test_ticket_normal_con_saldo_legacy_cero_conserva_calculo_actual(self):
+        ticket = self.ticket()
+        inicio = ticket.creado_at
+        momento = inicio + timedelta(minutes=30)
+
+        resumen = resumen_sla(ticket, momento)
+        sincronizar_sla(ticket, self.juan, momento)
+        ticket.refresh_from_db()
+
+        self.assertEqual(ticket.sla_legacy_segundos, 0)
+        self.assertEqual(resumen["efectivo"], 1800)
+        self.assertEqual(ticket.sla_segundos_acumulados, 1800)
+
+    def test_sla_legacy_y_segmentos_se_suman_sin_mezclarse(self):
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            responsable=self.juan,
+            sla_limite_minutos=240,
+            sla_legacy_segundos=60 * 60,
+        )
+        inicio = ticket.creado_at
+        SegmentoSLA.objects.create(
+            ticket=ticket,
+            responsable=self.juan,
+            inicio=inicio,
+            fin=inicio + timedelta(minutes=30),
+            cuenta_sla=True,
+        )
+
+        resumen = resumen_sla(ticket, inicio + timedelta(minutes=30))
+
+        self.assertEqual(resumen["efectivo"], 90 * 60)
+        self.assertEqual(ticket.segmentos_sla.count(), 1)
+
+    def test_tiempo_restante_descuenta_saldo_legacy(self):
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            responsable=self.juan,
+            sla_limite_minutos=240,
+            sla_legacy_segundos=165 * 60,
+        )
+        inicio = ticket.creado_at
+        SegmentoSLA.objects.create(
+            ticket=ticket,
+            responsable=self.juan,
+            inicio=inicio,
+            fin=inicio + timedelta(minutes=10),
+            cuenta_sla=True,
+        )
+
+        resumen = resumen_sla(ticket, inicio + timedelta(minutes=10))
+
+        self.assertEqual(resumen["efectivo"], 175 * 60)
+        self.assertEqual(resumen["restante"], 65 * 60)
+
+    def test_sla_excedido_considera_saldo_legacy(self):
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            responsable=self.juan,
+            sla_limite_minutos=60,
+            sla_legacy_segundos=(60 * 60) + 1,
+        )
+
+        sincronizar_sla(ticket, self.juan, ticket.creado_at)
+        ticket.refresh_from_db()
+
+        self.assertTrue(resumen_sla(ticket, ticket.creado_at)["excedido"])
+        self.assertTrue(ticket.sla_excedido)
+        self.assertEqual(ticket.sla_segundos_acumulados, (60 * 60) + 1)
+
+    def test_pausa_nueva_no_agrega_tiempo_efectivo_al_saldo_legacy(self):
+        ticket = self.ticket()
+        ticket.sla_legacy_segundos = 60 * 60
+        ticket.save(update_fields=["sla_legacy_segundos"])
+        inicio = ticket.creado_at
+
+        with patch("tickets.services.operacion.timezone.now", return_value=inicio + timedelta(minutes=10)):
+            cambiar_seguimiento(ticket.pk, self.juan, {
+                "estado": EstadoTicket.EN_ESPERA,
+                "motivo_espera": "Pendiente del proveedor",
+                "esperando_a": "Proveedor",
+                "siguiente_accion": "Esperar autorización",
+            })
+        ticket.refresh_from_db()
+        resumen = resumen_sla(ticket, inicio + timedelta(minutes=40))
+
+        self.assertEqual(resumen["efectivo"], 70 * 60)
+        self.assertEqual(resumen["pausa"], 30 * 60)
+
+    def test_reapertura_continua_desde_saldo_legacy_sin_reiniciarlo(self):
+        ticket = self.ticket()
+        ticket.sla_legacy_segundos = 60 * 60
+        inicio = ticket.creado_at
+        cierre = inicio + timedelta(minutes=10)
+        ticket.estado_interno = EstadoTicket.CERRADO
+        ticket.cerrado_at = cierre
+        ticket.save(update_fields=["sla_legacy_segundos", "estado_interno", "cerrado_at"])
+        sincronizar_sla(ticket, self.juan, cierre)
+
+        ticket.estado_interno = EstadoTicket.EN_PROCESO
+        ticket.cerrado_at = None
+        ticket.save(update_fields=["estado_interno", "cerrado_at"])
+        sincronizar_sla(ticket, self.juan, cierre)
+        sincronizar_sla(ticket, self.juan, cierre + timedelta(minutes=20))
+        ticket.refresh_from_db()
+
+        self.assertEqual(ticket.sla_legacy_segundos, 60 * 60)
+        self.assertEqual(resumen_sla(ticket, cierre + timedelta(minutes=20))["efectivo"], 90 * 60)
+        self.assertEqual(ticket.sla_segundos_acumulados, 90 * 60)
+
+    def test_con_sla_actual_considera_saldo_legacy(self):
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            sla_limite_minutos=60,
+            sla_legacy_segundos=(60 * 60) + 1,
+        )
+
+        actual = con_sla_actual(Ticket.objects.filter(pk=ticket.pk)).get()
+
+        self.assertEqual(actual.duracion_sla_actual, timedelta(seconds=(60 * 60) + 1))
+        self.assertTrue(actual.sla_vencido_actual)
+
+    def test_reporteria_considera_saldo_legacy_en_tiempo_y_vencimiento(self):
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            responsable=self.juan,
+            sla_limite_minutos=60,
+            sla_legacy_segundos=60 * 60,
+        )
+        inicio = ticket.creado_at
+        SegmentoSLA.objects.create(
+            ticket=ticket,
+            responsable=self.juan,
+            inicio=inicio,
+            fin=inicio + timedelta(minutes=30),
+            cuenta_sla=True,
+        )
+
+        filas = _filas_reporte_incidencias({
+            "fecha_inicio": timezone.localdate(),
+            "fecha_fin": timezone.localdate(),
+        })
+        fila = next(fila for fila in filas if fila["ticket"].pk == ticket.pk)
+
+        self.assertEqual(fila["efectivo"], 90 * 60)
+        self.assertTrue(fila["excedido"])
+
+    def test_tickets_existentes_sin_datos_legacy_siguen_permitidos(self):
+        primer_ticket = Ticket.objects.create(empresa=self.empresa)
+        segundo_ticket = Ticket.objects.create(empresa=self.empresa)
+
+        self.assertIsNone(primer_ticket.legacy_source)
+        self.assertIsNone(primer_ticket.legacy_id)
+        self.assertEqual(primer_ticket.sla_legacy_segundos, 0)
+        self.assertEqual(resumen_sla(primer_ticket, primer_ticket.creado_at)["efectivo"], 0)
+        self.assertEqual(Ticket.objects.filter(pk__in=[primer_ticket.pk, segundo_ticket.pk]).count(), 2)
+
+    def test_identidad_legacy_es_unica_y_saldo_no_puede_ser_negativo(self):
+        Ticket.objects.create(
+            empresa=self.empresa,
+            legacy_source="php_mysql",
+            legacy_id="42",
+        )
+
+        with transaction.atomic():
+            with self.assertRaises(IntegrityError):
+                Ticket.objects.create(
+                    empresa=self.empresa,
+                    legacy_source="php_mysql",
+                    legacy_id="42",
+                )
+        with transaction.atomic():
+            with self.assertRaises(IntegrityError):
+                Ticket.objects.create(
+                    empresa=self.empresa,
+                    sla_legacy_segundos=-1,
+                )
 
     def test_espera_incompleta_no_pausa_ni_cambia_estado(self):
         t = self.ticket()

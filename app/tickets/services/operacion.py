@@ -131,15 +131,18 @@ def registrar_segmento_operativo(ticket, ahora=None):
 def resumen_sla(ticket, ahora=None):
     ahora = ahora or timezone.now()
     segmentos = list(ticket.segmentos_sla.all())
-    efectivo = pausa = 0
+    efectivo_segmentos = pausa = 0
     for segmento in segmentos:
         segundos = max(0, int(((segmento.fin or ahora) - segmento.inicio).total_seconds()))
         if segmento.cuenta_sla:
-            efectivo += segundos
+            efectivo_segmentos += segundos
         else:
             pausa += segundos
     if not segmentos:
-        efectivo = max(0, int(((ticket.cerrado_at or ahora) - ticket.creado_at).total_seconds()))
+        efectivo_segmentos = max(0, int(((ticket.cerrado_at or ahora) - ticket.creado_at).total_seconds()))
+    # El saldo legacy se incorpora sólo aquí, al calcular el total efectivo;
+    # nunca se materializa como un SegmentoSLA ficticio.
+    efectivo = ticket.sla_legacy_segundos + efectivo_segmentos
     limite = ticket.sla_limite_minutos * 60 if ticket.sla_limite_minutos is not None else None
     restante = max(0, limite - efectivo) if limite is not None else None
     excedido_por = max(0, efectivo - limite) if limite is not None else 0
@@ -155,8 +158,16 @@ def resumen_sla(ticket, ahora=None):
 def con_sla_actual(queryset):
     duracion = ExpressionWrapper(Coalesce(F("fin"), Value(timezone.now())) - F("inicio"), output_field=DurationField())
     segmentos = SegmentoSLA.objects.filter(ticket_id=OuterRef("pk"), cuenta_sla=True).order_by().values("ticket_id").annotate(total=Sum(duracion)).values("total")
+    saldo_legacy = ExpressionWrapper(
+        F("sla_legacy_segundos") * Value(timedelta(seconds=1)),
+        output_field=DurationField(),
+    )
     return queryset.annotate(
-        duracion_sla_actual=Coalesce(Subquery(segmentos, output_field=DurationField()), Value(timedelta())),
+        duracion_sla_actual=ExpressionWrapper(
+            Coalesce(Subquery(segmentos, output_field=DurationField()), Value(timedelta()))
+            + saldo_legacy,
+            output_field=DurationField(),
+        ),
         limite_sla_actual=ExpressionWrapper(F("sla_limite_minutos") * Value(timedelta(minutes=1)), output_field=DurationField()),
     ).annotate(sla_vencido_actual=Case(When(Q(sla_excedido=True) | Q(duracion_sla_actual__gt=F("limite_sla_actual")), then=Value(True)), default=Value(False), output_field=BooleanField()))
 

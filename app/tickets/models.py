@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 from uuid import uuid4
@@ -535,6 +536,28 @@ class Ticket(models.Model):
         db_index=True,
     )
 
+    # Identificadores conservados para la futura migración del sistema legacy.
+    # No sustituyen los identificadores ni el origen de los flujos actuales.
+    legacy_source = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+
+    legacy_id = models.CharField(
+        max_length=120,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+
+    legacy_estado = models.CharField(
+        max_length=120,
+        null=True,
+        blank=True,
+    )
+
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, null=True, blank=True, related_name="tickets")
     tienda_registrada = models.ForeignKey(Tienda, on_delete=models.SET_NULL, null=True, blank=True, related_name="tickets")
 
@@ -750,6 +773,13 @@ class Ticket(models.Model):
 
     sla_segundos_acumulados = models.BigIntegerField(default=0)
 
+    # Saldo efectivo anterior al corte de migración. Los SegmentoSLA siempre
+    # representan solamente el tiempo registrado por Django.
+    sla_legacy_segundos = models.PositiveBigIntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
+
     sla_excedido = models.BooleanField(
         default=False,
         db_index=True,
@@ -815,6 +845,20 @@ class Ticket(models.Model):
 
         constraints = [
             models.UniqueConstraint(fields=["empresa", "ticket_bradescard"], name="uq_ticket_empresa_externo"),
+            models.UniqueConstraint(
+                fields=["legacy_source", "legacy_id"],
+                condition=(
+                    models.Q(legacy_source__isnull=False)
+                    & ~models.Q(legacy_source="")
+                    & models.Q(legacy_id__isnull=False)
+                    & ~models.Q(legacy_id="")
+                ),
+                name="uq_ticket_legacy_source_id",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(sla_legacy_segundos__gte=0),
+                name="ck_ticket_sla_legacy_no_negativo",
+            ),
         ]
 
         indexes = [

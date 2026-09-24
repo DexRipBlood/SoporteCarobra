@@ -609,7 +609,7 @@ class SeguridadTicketsTests(TestCase):
             reverse("tickets:detalle", args=[self.ticket_creado.folio])
         )
         content = detail_response.content.decode()
-        hero = content.split('<section class="ticket-hero">', 1)[1].split(
+        hero = content.split('<section class="ticket-hero" id="ticket-resumen">', 1)[1].split(
             "</section>",
             1,
         )[0]
