@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -75,3 +76,41 @@ class PerfilUsuario(models.Model):
 
     def __str__(self):
         return f"{self.user.username} · {self.get_rol_display()}"
+
+
+class IdentidadLegacyUsuario(models.Model):
+    """Vínculo auditable entre una identidad legacy y una cuenta Django."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="identidades_legacy",
+    )
+    legacy_source = models.CharField(max_length=100)
+    legacy_id = models.CharField(max_length=120)
+    legacy_username = models.CharField(max_length=150, blank=True)
+    legacy_email = models.CharField(max_length=254, blank=True)
+    legacy_rol = models.CharField(max_length=100, blank=True)
+    legacy_activo = models.BooleanField(null=True, blank=True)
+    datos_origen = models.JSONField(default=dict, blank=True)
+    migrado_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        ordering = ["legacy_source", "legacy_id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["legacy_source", "legacy_id"],
+                name="uq_identidad_legacy_source_id",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.legacy_source}:{self.legacy_id} → {self.user_id}"
+
+    def save(self, *args, **kwargs):
+        # La futura importación debe usar el saneador explícitamente; esta
+        # segunda capa protege además las persistencias normales del modelo.
+        from usuarios.services.legacy import sanear_datos_origen_legacy
+
+        self.datos_origen = sanear_datos_origen_legacy(self.datos_origen)
+        return super().save(*args, **kwargs)
