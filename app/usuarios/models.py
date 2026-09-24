@@ -1,5 +1,8 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import F, Value
+from django.db.models.functions import Trim
+from django.db.models.lookups import Exact
 from django.utils import timezone
 from pathlib import Path
 from uuid import uuid4
@@ -99,8 +102,16 @@ class IdentidadLegacyUsuario(models.Model):
         ordering = ["legacy_source", "legacy_id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["legacy_source", "legacy_id"],
+                Trim("legacy_source"),
+                Trim("legacy_id"),
                 name="uq_identidad_legacy_source_id",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    ~Exact(Trim(F("legacy_source")), Value(""))
+                    & ~Exact(Trim(F("legacy_id")), Value(""))
+                ),
+                name="ck_identidad_legacy_source_id_no_vacios",
             ),
         ]
 
@@ -112,5 +123,7 @@ class IdentidadLegacyUsuario(models.Model):
         # segunda capa protege además las persistencias normales del modelo.
         from usuarios.services.legacy import sanear_datos_origen_legacy
 
+        self.legacy_source = str(self.legacy_source or "").strip()
+        self.legacy_id = str(self.legacy_id or "").strip()
         self.datos_origen = sanear_datos_origen_legacy(self.datos_origen)
         return super().save(*args, **kwargs)

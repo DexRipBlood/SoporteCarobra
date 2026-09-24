@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.test import TestCase
@@ -150,6 +152,21 @@ class IdentidadLegacyUsuarioTests(TestCase):
                 self.assertEqual(propuesta.rol_destino, PerfilUsuario.Rol.USUARIO)
                 self.assertFalse(hasattr(propuesta, "puede_ver_todos"))
 
+    def test_rol_legacy_vacio_requiere_revision(self):
+        for rol in ("", None):
+            with self.subTest(rol=rol):
+                propuesta = proponer_rol_legacy(rol)
+                self.assertEqual(propuesta.rol_destino, PerfilUsuario.Rol.USUARIO)
+                self.assertTrue(propuesta.requiere_revision)
+                self.assertEqual(propuesta.razon, "ROL_LEGACY_VACIO")
+
+    def test_rol_legacy_desconocido_requiere_revision(self):
+        propuesta = proponer_rol_legacy("JEFE_REGIONAL")
+
+        self.assertEqual(propuesta.rol_destino, PerfilUsuario.Rol.USUARIO)
+        self.assertTrue(propuesta.requiere_revision)
+        self.assertEqual(propuesta.razon, "ROL_LEGACY_DESCONOCIDO")
+
     def test_google_oauth_sigue_sin_autoregistro(self):
         self.assertFalse(GoogleSocialAccountAdapter().is_open_for_signup(None, None))
 
@@ -186,6 +203,88 @@ class IdentidadLegacyUsuarioTests(TestCase):
         ])
 
         self.assertEqual(alertas[0].codigo, "LEGACY_EMAIL_DUPLICADO")
+
+    def test_validacion_previa_acepta_objetos(self):
+        @dataclass
+        class RegistroLegacy:
+            legacy_source: str
+            legacy_id: str
+            legacy_email: str
+            legacy_username: str = ""
+
+        alertas = validar_preparacion_identidades_legacy([
+            RegistroLegacy("php", "17", "persona@empresa.com"),
+            RegistroLegacy("php", "18", " PERSONA@EMPRESA.COM "),
+        ])
+
+        self.assertEqual(alertas[0].codigo, "LEGACY_EMAIL_DUPLICADO")
+
+    def test_resolver_requiere_source_legacy(self):
+        resultado = resolver_identidad_legacy(
+            legacy_source="", legacy_id="17", legacy_email="nueva@empresa.com",
+        )
+
+        self.assertEqual(resultado.accion, AccionIdentidadLegacy.REQUIERE_REVISION)
+        self.assertEqual(resultado.razon, "LEGACY_SOURCE_FALTANTE")
+        self.assertEqual(User.objects.count(), 0)
+
+    def test_resolver_requiere_id_legacy(self):
+        resultado = resolver_identidad_legacy(
+            legacy_source="php", legacy_id="", legacy_email="nueva@empresa.com",
+        )
+
+        self.assertEqual(resultado.accion, AccionIdentidadLegacy.REQUIERE_REVISION)
+        self.assertEqual(resultado.razon, "LEGACY_ID_FALTANTE")
+        self.assertEqual(User.objects.count(), 0)
+
+    def test_identidad_legacy_no_permite_source_o_id_vacios(self):
+        user = self.crear_usuario("jlopez")
+
+        for source, legacy_id in (("", "17"), ("php", "")):
+            with self.subTest(source=source, legacy_id=legacy_id):
+                with transaction.atomic():
+                    with self.assertRaises(IntegrityError):
+                        IdentidadLegacyUsuario.objects.create(
+                            user=user,
+                            legacy_source=source,
+                            legacy_id=legacy_id,
+                        )
+
+    def test_constraint_rechaza_source_o_id_compuestos_solo_por_espacios(self):
+        user = self.crear_usuario("jlopez")
+
+        # bulk_create evita Model.save(), por lo que demuestra que la
+        # protección está en la base de datos y no sólo en la normalización.
+        for source, legacy_id in (("   ", "17"), ("php", "   ")):
+            with self.subTest(source=source, legacy_id=legacy_id):
+                with transaction.atomic():
+                    with self.assertRaises(IntegrityError):
+                        IdentidadLegacyUsuario.objects.bulk_create([
+                            IdentidadLegacyUsuario(
+                                user=user,
+                                legacy_source=source,
+                                legacy_id=legacy_id,
+                            ),
+                        ])
+
+    def test_identidad_legacy_no_se_duplica_con_espacios_en_identificadores(self):
+        user = self.crear_usuario("jlopez")
+        IdentidadLegacyUsuario.objects.create(
+            user=user,
+            legacy_source="php",
+            legacy_id="17",
+        )
+
+        # También se evita si una inserción evita Model.save().
+        with transaction.atomic():
+            with self.assertRaises(IntegrityError):
+                IdentidadLegacyUsuario.objects.bulk_create([
+                    IdentidadLegacyUsuario(
+                        user=user,
+                        legacy_source=" php ",
+                        legacy_id="17",
+                    ),
+                ])
 
     def test_password_hash_no_llega_a_datos_origen_persistidos(self):
         user = self.crear_usuario("jlopez")

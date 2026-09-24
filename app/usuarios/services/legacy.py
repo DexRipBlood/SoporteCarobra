@@ -128,8 +128,8 @@ def proponer_rol_legacy(legacy_rol):
     return PropuestaRolLegacy(
         legacy_rol=str(legacy_rol or ""),
         rol_destino=PerfilUsuario.Rol.USUARIO,
-        requiere_revision=bool(rol),
-        razon="ROL_LEGACY_DESCONOCIDO" if rol else None,
+        requiere_revision=True,
+        razon="ROL_LEGACY_DESCONOCIDO" if rol else "ROL_LEGACY_VACIO",
     )
 
 
@@ -187,6 +187,13 @@ def _resultado_revision(*, source, legacy_id, username, email, legacy_rol, propu
     )
 
 
+def obtener_valor(registro, campo, default=""):
+    """Lee datos de diccionarios y objetos de previsualización por igual."""
+    if isinstance(registro, Mapping):
+        return registro.get(campo, default)
+    return getattr(registro, campo, default)
+
+
 def resolver_identidad_legacy(*, legacy_source, legacy_id, legacy_username="", legacy_email="", legacy_rol="", legacy_activo=None):
     """Decide un vínculo sin crear, editar o habilitar cuentas Django.
 
@@ -200,6 +207,11 @@ def resolver_identidad_legacy(*, legacy_source, legacy_id, legacy_username="", l
     email = normalizar_correo(legacy_email)
     rol_original = str(legacy_rol or "").strip()
     propuesta = proponer_rol_legacy(rol_original)
+
+    if not source:
+        return _resultado_revision(source=source, legacy_id=legacy_id, username=username, email=email, legacy_rol=rol_original, propuesta=propuesta, razon="LEGACY_SOURCE_FALTANTE")
+    if not legacy_id:
+        return _resultado_revision(source=source, legacy_id=legacy_id, username=username, email=email, legacy_rol=rol_original, propuesta=propuesta, razon="LEGACY_ID_FALTANTE")
 
     existente = IdentidadLegacyUsuario.objects.filter(
         legacy_source=source, legacy_id=legacy_id
@@ -266,12 +278,11 @@ def validar_preparacion_identidades_legacy(registros):
     por_email = defaultdict(list)
     por_username = defaultdict(list)
     for registro in registros:
-        obtener = registro.get if isinstance(registro, dict) else getattr
-        source = str(obtener("legacy_source", "") or "").strip()
-        legacy_id = str(obtener("legacy_id", "") or "").strip()
+        source = str(obtener_valor(registro, "legacy_source", "") or "").strip()
+        legacy_id = str(obtener_valor(registro, "legacy_id", "") or "").strip()
         clave = f"{source}:{legacy_id}"
-        email = normalizar_correo(obtener("legacy_email", ""))
-        username = normalizar_username(obtener("legacy_username", ""))
+        email = normalizar_correo(obtener_valor(registro, "legacy_email", ""))
+        username = normalizar_username(obtener_valor(registro, "legacy_username", ""))
         if email:
             por_email[email].append(clave)
         if username:
