@@ -558,6 +558,14 @@ class Ticket(models.Model):
         blank=True,
     )
 
+    # Momento a partir del cual Django controla el SLA de un ticket migrado.
+    # El tiempo anterior se conserva exclusivamente en sla_legacy_segundos.
+    legacy_cutover_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, null=True, blank=True, related_name="tickets")
     tienda_registrada = models.ForeignKey(Tienda, on_delete=models.SET_NULL, null=True, blank=True, related_name="tickets")
 

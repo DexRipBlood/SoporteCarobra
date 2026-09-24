@@ -20,6 +20,7 @@ from .services.operacion import equipo_tienda, seguimiento_actual, iniciar_sla, 
 from .services.operacion import con_sla_actual
 from .services.importacion_bradescard import importar_bradescard
 from .services.importador_excel import COLUMNAS_ESPERADAS, analizar_importacion_bradescard
+from .services.legacy import traducir_estado_legacy
 from .views import _filas_reporte_incidencias
 
 
@@ -266,6 +267,8 @@ class OperacionConectadaTests(TestCase):
             sla_legacy_segundos=60 * 60,
         )
         inicio = ticket.creado_at
+        ticket.legacy_cutover_at = inicio
+        ticket.save(update_fields=["legacy_cutover_at"])
         SegmentoSLA.objects.create(
             ticket=ticket,
             responsable=self.juan,
@@ -282,6 +285,252 @@ class OperacionConectadaTests(TestCase):
 
         self.assertEqual(fila["efectivo"], 90 * 60)
         self.assertTrue(fila["excedido"])
+
+    def test_ticket_normal_inicia_sla_desde_creado_at(self):
+        ticket = Ticket.objects.create(empresa=self.empresa, responsable=self.juan)
+
+        iniciar_sla(ticket)
+        segmento = ticket.segmentos_sla.get()
+
+        self.assertIsNone(ticket.legacy_cutover_at)
+        self.assertEqual(segmento.inicio, ticket.creado_at)
+        self.assertTrue(segmento.cuenta_sla)
+
+    def test_ticket_legacy_inicia_sla_desde_el_corte(self):
+        corte = timezone.now().replace(microsecond=0)
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            responsable=self.juan,
+            estado_interno=EstadoTicket.EN_PROCESO,
+            legacy_cutover_at=corte,
+            sla_legacy_segundos=60 * 60,
+        )
+        creado_original = corte - timedelta(days=10)
+        Ticket.objects.filter(pk=ticket.pk).update(creado_at=creado_original)
+        ticket.refresh_from_db()
+
+        iniciar_sla(ticket)
+        segmento = ticket.segmentos_sla.get()
+
+        self.assertEqual(segmento.inicio, corte)
+        self.assertNotEqual(segmento.inicio, ticket.creado_at)
+
+    def test_fecha_original_legacy_anterior_al_corte_no_duplica_sla(self):
+        corte = timezone.now().replace(microsecond=0)
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            estado_interno=EstadoTicket.EN_PROCESO,
+            legacy_cutover_at=corte,
+            sla_legacy_segundos=60 * 60,
+        )
+        Ticket.objects.filter(pk=ticket.pk).update(creado_at=corte - timedelta(days=30))
+        ticket.refresh_from_db()
+
+        iniciar_sla(ticket)
+        resumen = resumen_sla(ticket, corte + timedelta(minutes=30))
+
+        self.assertEqual(resumen["efectivo"], 90 * 60)
+        self.assertEqual(resumen["pausa"], 0)
+
+    def test_inicializacion_legacy_abre_el_tipo_de_segmento_por_estado(self):
+        corte = timezone.now().replace(microsecond=0)
+        casos = {
+            EstadoTicket.NUEVO: (SegmentoSLA.Tipo.ATENCION, True),
+            EstadoTicket.ASIGNADO: (SegmentoSLA.Tipo.ATENCION, True),
+            EstadoTicket.EN_PROCESO: (SegmentoSLA.Tipo.ATENCION, True),
+            EstadoTicket.EN_ESPERA: (SegmentoSLA.Tipo.PAUSA, False),
+        }
+        for estado, (tipo, cuenta_sla) in casos.items():
+            with self.subTest(estado=estado):
+                ticket = Ticket.objects.create(
+                    empresa=self.empresa,
+                    estado_interno=estado,
+                    legacy_cutover_at=corte,
+                )
+
+                iniciar_sla(ticket)
+                segmento = ticket.segmentos_sla.get()
+
+                self.assertEqual(segmento.inicio, corte)
+                self.assertEqual(segmento.tipo, tipo)
+                self.assertEqual(segmento.cuenta_sla, cuenta_sla)
+
+    def test_espera_legacy_sin_detalles_interactivos_permanece_pausada(self):
+        corte = timezone.now().replace(microsecond=0)
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            estado_interno=EstadoTicket.EN_ESPERA,
+            legacy_cutover_at=corte,
+        )
+
+        sincronizar_sla(ticket, ahora=corte + timedelta(minutes=10))
+        segmento = ticket.segmentos_sla.get()
+
+        self.assertFalse(segmento.cuenta_sla)
+        self.assertIsNone(segmento.fin)
+        self.assertEqual(resumen_sla(ticket, corte + timedelta(minutes=10))["efectivo"], 0)
+
+    def test_resuelto_y_cerrado_legacy_no_dejan_segmento_abierto(self):
+        corte = timezone.now().replace(microsecond=0)
+        for estado in (EstadoTicket.RESUELTO, EstadoTicket.CERRADO):
+            with self.subTest(estado=estado):
+                ticket = Ticket.objects.create(
+                    empresa=self.empresa,
+                    estado_interno=estado,
+                    legacy_cutover_at=corte,
+                    sla_legacy_segundos=60 * 60,
+                )
+
+                iniciar_sla(ticket)
+                sincronizar_sla(ticket, ahora=corte + timedelta(minutes=10))
+
+                self.assertFalse(ticket.segmentos_sla.filter(fin__isnull=True).exists())
+                self.assertEqual(resumen_sla(ticket, corte + timedelta(minutes=10))["efectivo"], 60 * 60)
+
+    def test_reapertura_legacy_previa_al_corte_inicia_segmento_en_corte(self):
+        corte = timezone.now().replace(microsecond=0)
+        reapertura_legacy = corte - timedelta(hours=2)
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            estado_interno=EstadoTicket.EN_PROCESO,
+            legacy_cutover_at=corte,
+            ultima_reapertura_at=reapertura_legacy,
+        )
+
+        iniciar_sla(ticket)
+        segmento = ticket.segmentos_sla.get()
+
+        self.assertEqual(segmento.inicio, corte)
+        self.assertGreater(segmento.inicio, ticket.ultima_reapertura_at)
+
+    def test_reapertura_legacy_previa_al_corte_no_duplica_intervalo(self):
+        corte = timezone.now().replace(microsecond=0)
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            estado_interno=EstadoTicket.EN_PROCESO,
+            legacy_cutover_at=corte,
+            ultima_reapertura_at=corte - timedelta(hours=2),
+            sla_legacy_segundos=60 * 60,
+        )
+        Ticket.objects.filter(pk=ticket.pk).update(creado_at=corte - timedelta(days=5))
+        ticket.refresh_from_db()
+
+        iniciar_sla(ticket)
+        resumen = resumen_sla(ticket, corte + timedelta(minutes=30))
+
+        self.assertEqual(resumen["efectivo"], 90 * 60)
+
+    def test_reapertura_legacy_posterior_al_corte_inicia_en_fecha_real(self):
+        corte = timezone.now().replace(microsecond=0)
+        reapertura = corte + timedelta(hours=2)
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            estado_interno=EstadoTicket.CERRADO,
+            cerrado_at=corte,
+            legacy_cutover_at=corte,
+            sla_legacy_segundos=60 * 60,
+        )
+        iniciar_sla(ticket)
+        ticket.estado_interno = EstadoTicket.EN_PROCESO
+        ticket.cerrado_at = None
+        ticket.ultima_reapertura_at = reapertura
+        ticket.save(update_fields=["estado_interno", "cerrado_at", "ultima_reapertura_at"])
+
+        sincronizar_sla(ticket, ahora=reapertura)
+        sincronizar_sla(ticket, ahora=reapertura + timedelta(minutes=10))
+        ticket.refresh_from_db()
+        segmento = ticket.segmentos_sla.get()
+
+        self.assertEqual(ticket.sla_legacy_segundos, 60 * 60)
+        self.assertEqual(segmento.inicio, reapertura)
+        self.assertEqual(ticket.sla_segundos_acumulados, 70 * 60)
+
+    def test_reapertura_ticket_nativo_conserva_inicio_actual(self):
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            estado_interno=EstadoTicket.CERRADO,
+            cerrado_at=timezone.now().replace(microsecond=0),
+        )
+        iniciar_sla(ticket)
+        reapertura = ticket.cerrado_at + timedelta(hours=1)
+        ticket.estado_interno = EstadoTicket.EN_PROCESO
+        ticket.cerrado_at = None
+        ticket.ultima_reapertura_at = reapertura
+        ticket.save(update_fields=["estado_interno", "cerrado_at", "ultima_reapertura_at"])
+
+        sincronizar_sla(ticket, ahora=reapertura)
+        segmento = ticket.segmentos_sla.filter(fin__isnull=True).get()
+
+        self.assertIsNone(ticket.legacy_cutover_at)
+        self.assertEqual(segmento.inicio, reapertura)
+
+    def test_traduccion_de_todos_los_estados_legacy_conocidos(self):
+        casos = {
+            "Nuevo": EstadoTicket.NUEVO,
+            "Asignado": EstadoTicket.ASIGNADO,
+            "En curso": EstadoTicket.EN_PROCESO,
+            "En curso (asignada)": EstadoTicket.EN_PROCESO,
+            "En seguimiento": EstadoTicket.EN_PROCESO,
+            "En espera": EstadoTicket.EN_ESPERA,
+            "En observación": EstadoTicket.RESUELTO,
+            "Resuelto": EstadoTicket.RESUELTO,
+            "Cerrado": EstadoTicket.CERRADO,
+        }
+        for estado_legacy, esperado in casos.items():
+            with self.subTest(estado_legacy=estado_legacy):
+                resultado = traducir_estado_legacy(estado_legacy)
+                self.assertEqual(resultado.estado, esperado)
+                self.assertFalse(resultado.requiere_revision)
+
+    def test_abierto_y_pendiente_legacy_usan_contexto(self):
+        for estado_legacy in ("Abierto", "Pendiente"):
+            with self.subTest(estado_legacy=estado_legacy, caso="sin contexto"):
+                self.assertEqual(traducir_estado_legacy(estado_legacy).estado, EstadoTicket.NUEVO)
+            with self.subTest(estado_legacy=estado_legacy, caso="responsable"):
+                self.assertEqual(
+                    traducir_estado_legacy(estado_legacy, tiene_responsable=True).estado,
+                    EstadoTicket.ASIGNADO,
+                )
+            with self.subTest(estado_legacy=estado_legacy, caso="actividad"):
+                self.assertEqual(
+                    traducir_estado_legacy(estado_legacy, tiene_actividad=True).estado,
+                    EstadoTicket.EN_PROCESO,
+                )
+
+    def test_estado_legacy_desconocido_requiere_revision(self):
+        resultado = traducir_estado_legacy("Estado en tránsito")
+
+        self.assertIsNone(resultado.estado)
+        self.assertTrue(resultado.requiere_revision)
+        self.assertIn("Estado en tránsito", resultado.advertencia)
+
+    def test_traduccion_legacy_tolera_acentos_mayusculas_y_espacios(self):
+        resultado = traducir_estado_legacy("  EN   OBSERVACIÓN  ")
+
+        self.assertEqual(resultado.estado, EstadoTicket.RESUELTO)
+        self.assertFalse(resultado.requiere_revision)
+
+    def test_reporteria_legacy_solo_agrega_saldo_en_periodo_del_corte(self):
+        corte = timezone.now().replace(microsecond=0)
+        ticket = Ticket.objects.create(
+            empresa=self.empresa,
+            legacy_cutover_at=corte,
+            sla_legacy_segundos=60 * 60,
+        )
+
+        filas_corte = _filas_reporte_incidencias({
+            "fecha_inicio": corte.date(),
+            "fecha_fin": corte.date(),
+        })
+        filas_posteriores = _filas_reporte_incidencias({
+            "fecha_inicio": corte.date() + timedelta(days=1),
+            "fecha_fin": corte.date() + timedelta(days=1),
+        })
+        fila_corte = next(fila for fila in filas_corte if fila["ticket"].pk == ticket.pk)
+        fila_posterior = next(fila for fila in filas_posteriores if fila["ticket"].pk == ticket.pk)
+
+        self.assertEqual(fila_corte["efectivo"], 60 * 60)
+        self.assertEqual(fila_posterior["efectivo"], 0)
 
     def test_tickets_existentes_sin_datos_legacy_siguen_permitidos(self):
         primer_ticket = Ticket.objects.create(empresa=self.empresa)

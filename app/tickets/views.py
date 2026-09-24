@@ -133,7 +133,13 @@ def _filas_reporte_incidencias(datos):
         inicio = max(ticket.creado_at, desde)
         fin = min(ticket.cerrado_at or hasta, hasta)
         total = _segundos_en_rango(ticket.creado_at, ticket.cerrado_at, desde, hasta)
-        efectivo = ticket.sla_legacy_segundos
+        # El saldo legacy no tiene desglose diario. Se registra una sola vez
+        # en el periodo que contiene el corte, nunca en periodos posteriores.
+        incluye_corte_legacy = bool(
+            ticket.legacy_cutover_at
+            and desde <= ticket.legacy_cutover_at <= hasta
+        )
+        efectivo = ticket.sla_legacy_segundos if incluye_corte_legacy else 0
         pausa = 0
         for segmento in ticket.segmentos_sla.all():
             segundos = _segundos_en_rango(segmento.inicio, segmento.fin, desde, hasta)
@@ -200,7 +206,7 @@ def _matriz_sla_reporte(filas, datos):
             grupo["limites"].append(ticket.sla_limite_minutos)
         grupo["excedido"] = grupo["excedido"] or fila["excedido"]
         segmentos = list(ticket.segmentos_sla.all())
-        if not segmentos:
+        if not segmentos and ticket.legacy_cutover_at is None:
             segmentos = [type("Segmento", (), {"inicio": ticket.creado_at, "fin": ticket.cerrado_at, "cuenta_sla": True})()]
         for segmento in segmentos:
             inicio = max(segmento.inicio, inicio_rango)

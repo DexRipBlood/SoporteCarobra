@@ -110,6 +110,9 @@ def evento(ticket, usuario, tipo, descripcion, antes=None, despues=None, ahora=N
 
 
 def iniciar_sla(ticket):
+    if ticket.legacy_cutover_at is not None:
+        from tickets.services.legacy import inicializar_sla_legacy
+        return inicializar_sla_legacy(ticket)
     if not ticket.segmentos_sla.exists():
         SegmentoSLA.objects.create(ticket=ticket, responsable=ticket.responsable,
             inicio=ticket.creado_at, fin=ticket.cerrado_at if ticket.estado_interno == EstadoTicket.CERRADO else None,
@@ -138,7 +141,7 @@ def resumen_sla(ticket, ahora=None):
             efectivo_segmentos += segundos
         else:
             pausa += segundos
-    if not segmentos:
+    if not segmentos and ticket.legacy_cutover_at is None:
         efectivo_segmentos = max(0, int(((ticket.cerrado_at or ahora) - ticket.creado_at).total_seconds()))
     # El saldo legacy se incorpora sólo aquí, al calcular el total efectivo;
     # nunca se materializa como un SegmentoSLA ficticio.
@@ -177,8 +180,14 @@ def sincronizar_sla(ticket, usuario=None, ahora=None):
     ahora = ahora or timezone.now()
     iniciar_sla(ticket)
     actual = ticket.segmentos_sla.filter(fin__isnull=True).first()
-    pausa = ticket.estado_interno == EstadoTicket.EN_ESPERA and bool(ticket.motivo_espera.strip() and ticket.esperando_a.strip() and ticket.siguiente_accion.strip())
-    cerrar = ticket.estado_interno == EstadoTicket.CERRADO
+    pausa = ticket.estado_interno == EstadoTicket.EN_ESPERA and (
+        ticket.legacy_cutover_at is not None
+        or bool(ticket.motivo_espera.strip() and ticket.esperando_a.strip() and ticket.siguiente_accion.strip())
+    )
+    cerrar = ticket.estado_interno == EstadoTicket.CERRADO or (
+        ticket.legacy_cutover_at is not None
+        and ticket.estado_interno == EstadoTicket.RESUELTO
+    )
     if actual and (cerrar or actual.cuenta_sla == pausa):
         actual.fin = ahora
         actual.save(update_fields=["fin"])
