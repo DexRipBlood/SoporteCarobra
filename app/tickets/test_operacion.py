@@ -260,15 +260,22 @@ class OperacionConectadaTests(TestCase):
         self.assertTrue(actual.sla_vencido_actual)
 
     def test_reporteria_considera_saldo_legacy_en_tiempo_y_vencimiento(self):
+        dia = timezone.localdate()
+        tz = timezone.get_current_timezone()
+        inicio = timezone.make_aware(datetime.combine(dia, time(12, 0)), tz)
         ticket = Ticket.objects.create(
             empresa=self.empresa,
             responsable=self.juan,
             sla_limite_minutos=60,
             sla_legacy_segundos=60 * 60,
         )
-        inicio = ticket.creado_at
-        ticket.legacy_cutover_at = inicio
-        ticket.save(update_fields=["legacy_cutover_at"])
+        # auto_now_add usa la hora real; se fija mediodía local para que el
+        # segmento 12:00–12:30 siempre pertenezca al día del reporte.
+        Ticket.objects.filter(pk=ticket.pk).update(
+            creado_at=inicio,
+            legacy_cutover_at=inicio,
+        )
+        ticket.refresh_from_db()
         SegmentoSLA.objects.create(
             ticket=ticket,
             responsable=self.juan,
@@ -278,8 +285,8 @@ class OperacionConectadaTests(TestCase):
         )
 
         filas = _filas_reporte_incidencias({
-            "fecha_inicio": timezone.localdate(),
-            "fecha_fin": timezone.localdate(),
+            "fecha_inicio": dia,
+            "fecha_fin": dia,
         })
         fila = next(fila for fila in filas if fila["ticket"].pk == ticket.pk)
 
@@ -511,20 +518,26 @@ class OperacionConectadaTests(TestCase):
         self.assertFalse(resultado.requiere_revision)
 
     def test_reporteria_legacy_solo_agrega_saldo_en_periodo_del_corte(self):
-        corte = timezone.now().replace(microsecond=0)
+        dia = timezone.localdate()
+        tz = timezone.get_current_timezone()
+        corte = timezone.make_aware(datetime.combine(dia, time(12, 0)), tz)
         ticket = Ticket.objects.create(
             empresa=self.empresa,
             legacy_cutover_at=corte,
             sla_legacy_segundos=60 * 60,
         )
+        # El día del corte se deriva de la fecha local, no de corte.date()
+        # (que sería UTC y falla si la prueba corre cerca de medianoche).
+        Ticket.objects.filter(pk=ticket.pk).update(creado_at=corte)
+        ticket.refresh_from_db()
 
         filas_corte = _filas_reporte_incidencias({
-            "fecha_inicio": corte.date(),
-            "fecha_fin": corte.date(),
+            "fecha_inicio": dia,
+            "fecha_fin": dia,
         })
         filas_posteriores = _filas_reporte_incidencias({
-            "fecha_inicio": corte.date() + timedelta(days=1),
-            "fecha_fin": corte.date() + timedelta(days=1),
+            "fecha_inicio": dia + timedelta(days=1),
+            "fecha_fin": dia + timedelta(days=1),
         })
         fila_corte = next(fila for fila in filas_corte if fila["ticket"].pk == ticket.pk)
         fila_posterior = next(fila for fila in filas_posteriores if fila["ticket"].pk == ticket.pk)
